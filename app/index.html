@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!--
+  app/index.html
+  ★注意★ アップロードされた実ファイルが空だったため、ゼロから再構成しました。
+  app.js / style.css / manifest.json / service-worker.js / icons/ は
+  既存のものがある前提で参照しています(中身は見ていません)。
+  実際のファイル名・配置が違う場合は調整してください。
+-->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>人相占い</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- データファイル群(data/index.js が集約するので、この並び順に依存しない) -->
+  <script src="../data/core.js"></script>
+  <script src="../data/constitution.js"></script>
+  <script src="../data/five_elements.js"></script>
+  <script src="../data/face_shape.js"></script>
+  <script src="../data/body.js"></script>
+  <script src="../data/phrenology.js"></script>
+  <script src="../data/palmistry.js"></script>
+  <script src="../data/palmistry_nails.js"></script>
+  <script src="../data/palmistry_mounts.js"></script>
+  <script src="../data/palmistry_lines.js"></script>
+  <script src="../data/index.js"></script>
+
+  <!-- アプリ本体 -->
+  <script src="app.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js').catch(function (err) {
+          console.warn('Service worker registration failed:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
