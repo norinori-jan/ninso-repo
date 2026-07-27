@@ -51,7 +51,9 @@
       safeRequire('./palmistry.js'),
       safeRequire('./palmistry_nails.js'),
       safeRequire('./palmistry_mounts.js'),
-      safeRequire('./palmistry_lines.js')
+      safeRequire('./palmistry_lines.js'),
+      safeRequire('./forehead_extra.js'),
+      safeRequire('./hair.js')
     );
   } else {
     root.PARTS = factory(
@@ -64,7 +66,9 @@
       root.PALMISTRY_PARTS,
       root.PALMISTRY_NAILS_PARTS,
       root.PALMISTRY_MOUNTS_PARTS,
-      root.PALMISTRY_LINES_PARTS
+      root.PALMISTRY_LINES_PARTS,
+      root.FOREHEAD_EXTRA,
+      root.HAIR
     );
   }
 }(typeof self !== 'undefined' ? self : this, function (
@@ -77,7 +81,9 @@
   palmistry,
   palmistryNails,
   palmistryMounts,
-  palmistryLines
+  palmistryLines,
+  foreheadExtra,
+  hair
 ) {
   function arr(x) {
     return Array.isArray(x) ? x : [];
@@ -93,6 +99,8 @@
     arr(palmistry),
     arr(palmistryNails),
     arr(palmistryMounts),
-    arr(palmistryLines)
+    arr(palmistryLines),
+    arr(foreheadExtra),
+    arr(hair)
   );
 }));

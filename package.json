@@ -1,0 +1,9 @@
+{
+  "name": "ninso-repo",
+  "version": "0.1.0",
+  "description": "人相・手相占いPWA(オフライン動作)",
+  "private": true,
+  "scripts": {
+    "index": "node tools/generate-index.js"
+  }
+}

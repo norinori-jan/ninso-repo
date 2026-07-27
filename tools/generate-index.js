@@ -29,6 +29,8 @@ const DATA_FILES = [
   'palmistry_nails.js',
   'palmistry_mounts.js',
   'palmistry_lines.js',
+  'forehead_extra.js',
+  'hair.js',
 ];
 
 function loadParts(filename) {
