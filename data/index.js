@@ -21,6 +21,10 @@
  *    - body.js         → root.BODY_PARTS          (要確認・仮定)
  *    - phrenology.js   → root.PHRENOLOGY_PARTS    (アップロード実物で確認済み)
  *    - palmistry*.js   → root.PALMISTRY_*_PARTS   (今回作成したので確定)
+ *    - forehead_extra.js → root.FOREHEAD_EXTRA    (確定)
+ *    - hair.js         → root.HAIR                (確定)
+ *    - eyebrows.js     → root.EYEBROWS             (第七輯で追加・確定)
+ *    - nose.js         → root.NOSE                 (第七輯・第八輯で追加・確定)
  *
  *    core.js 等5ファイルの実際のグローバル変数名がこれと違う場合は、
  *    下のブラウザ分岐の該当行を実際の名前に書き換えてください。
@@ -53,7 +57,9 @@
       safeRequire('./palmistry_mounts.js'),
       safeRequire('./palmistry_lines.js'),
       safeRequire('./forehead_extra.js'),
-      safeRequire('./hair.js')
+      safeRequire('./hair.js'),
+      safeRequire('./eyebrows.js'),
+      safeRequire('./nose.js')
     );
   } else {
     root.PARTS = factory(
@@ -68,7 +74,9 @@
       root.PALMISTRY_MOUNTS_PARTS,
       root.PALMISTRY_LINES_PARTS,
       root.FOREHEAD_EXTRA,
-      root.HAIR
+      root.HAIR,
+      root.EYEBROWS,
+      root.NOSE
     );
   }
 }(typeof self !== 'undefined' ? self : this, function (
@@ -83,7 +91,9 @@
   palmistryMounts,
   palmistryLines,
   foreheadExtra,
-  hair
+  hair,
+  eyebrows,
+  nose
 ) {
   function arr(x) {
     return Array.isArray(x) ? x : [];
@@ -101,6 +111,8 @@
     arr(palmistryMounts),
     arr(palmistryLines),
     arr(foreheadExtra),
-    arr(hair)
+    arr(hair),
+    arr(eyebrows),
+    arr(nose)
   );
 }));

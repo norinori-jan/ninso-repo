@@ -31,6 +31,8 @@ const DATA_FILES = [
   'palmistry_lines.js',
   'forehead_extra.js',
   'hair.js',
+  'eyebrows.js',
+  'nose.js',
 ];
 
 function loadParts(filename) {

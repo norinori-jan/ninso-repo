@@ -1,4 +1,4 @@
-<!-- 合計 69 項目 / 生成日時: 2026-07-27T10:25:30.632Z -->
+<!-- 合計 96 項目 / 生成日時: 2026-07-28T10:09:45.551Z -->
 
 # データ一覧(自動生成)
 
@@ -117,3 +117,40 @@
 | `hairline_m_shape` | 生え際のM字後退 | 毛髪 | 生え際 | 2 |
 | `hair_density_vitality` | 毛の太さ・密度と体力・気力 | 毛髪 | 密度 | 2 |
 | `hair_growth_line_marks` | 生え際周辺のホクロ・特徴 | 毛髪 | 生え際 | 2 |
+
+## eyebrows.js (15項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `eyebrow_terminology_confidant_palace` | 眉間の異名と交友宮・保寿官・兄弟宮 | 顔 | 眉 | 2 |
+| `eyebrow_gender_typical_shape` | 男性的な眉と女性的な眉の典型 | 顔 | 眉 | 2 |
+| `eyebrow_thickness_temperament` | 眉毛の太さと気質 | 顔 | 眉 | 2 |
+| `eyebrow_tail_angle_clockface` | 眉尻の傾き(尻上がり・尻下がり) | 顔 | 眉 | 2 |
+| `eyebrow_eye_distance_tainaku` | 眉と眼の間隔(田宅)の広狭 | 顔 | 眉 | 2 |
+| `eyebrow_glabella_width_personality` | 眉間(命宮)の広狭による性格傾向 | 顔 | 眉 | 2 |
+| `eyebrow_hair_density_texture` | 眉毛の密度・整い方による運勢 | 顔 | 眉 | 2 |
+| `eyebrow_color_reading` | 眉の色艶による後継運・財運 | 顔 | 眉 | 2 |
+| `eyebrow_double_strand_pattern` | 二筋眉・乱れ眉の相 | 顔 | 眉 | 1 |
+| `eyebrow_sparse_gap_pattern` | 間穴眉(毛が疎らで隙間の多い眉) | 顔 | 眉 | 1 |
+| `eyebrow_long_hair_longevity` | 眉の長毛(延寿毛)による長寿の相 | 顔 | 眉 | 1 |
+| `eyebrow_mole_three_dangers` | 眉のホクロ・疵と水難・火難・剣難 | 顔 | 眉 | 2 |
+| `eyebrow_sibling_count_reading` | 眉による兄弟姉妹の人数の見方(概念) | 顔 | 眉 | 1 |
+| `eyebrow_birth_order_zones` | 眉を左右四区分して出生順位を見る方法 | 顔 | 眉 | 1 |
+| `eyebrow_omens_collection` | 眉の一行占い(玄龍子相法より・伝統的な短句集) | 顔 | 眉 | 5 |
+
+## nose.js (12項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `nose_tree_metaphor_structure` | 鼻を幹とする顔全体の樹木比喩 | 顔 | 鼻 | 1 |
+| `nose_length_ratio_standard` | 鼻の長さの基準(顔の長さとの比率) | 顔 | 鼻 | 1 |
+| `nose_bridge_shape_types` | 鼻の各部位(山根・年上・寿上・準頭)の名称と対応 | 顔 | 鼻 | 1 |
+| `nose_tip_three_qualities` | 準頭(鼻先)に表れる三質論 | 顔 | 鼻 | 3 |
+| `nose_wing_size_reading` | 小鼻(金甲)の大小による財運・呼吸器の見方 | 顔 | 鼻 | 2 |
+| `nose_bone_prominence_type` | 鼻柱の硬性(強硬性・抵抗性)による性格 | 顔 | 鼻 | 2 |
+| `nose_profile_curve_types` | 鼻の横顔の凹凸(鷲鼻・団子鼻・普通)による性格 | 顔 | 鼻 | 3 |
+| `nose_tip_shape_hook_droop` | 鼻先の形状(垂れ気味・つまんだよう・平ら)による性格 | 顔 | 鼻 | 3 |
+| `nose_length_type_classification` | 長鼻・短鼻・高鼻・低鼻・広鼻・狭鼻の六分類 | 顔 | 鼻 | 3 |
+| `nose_female_fortune_correlation` | 女性の鼻の高低と夫婦運・自己主張の伝統的解釈 | 顔 | 鼻 | 2 |
+| `nose_climate_adaptation_theory` | 鼻の高低と気候適応の一般論 | 顔 | 鼻 | 1 |
+| `nose_mole_wealth_sign` | 小鼻周辺(食禄・食倉)のホクロと財運 | 顔 | 鼻 | 1 |
