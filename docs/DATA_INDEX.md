@@ -1,4 +1,4 @@
-<!-- 合計 96 項目 / 生成日時: 2026-07-28T10:09:45.551Z -->
+<!-- 合計 120 項目 / 生成日時: 2026-07-29T09:21:04.779Z -->
 
 # データ一覧(自動生成)
 
@@ -138,7 +138,7 @@
 | `eyebrow_birth_order_zones` | 眉を左右四区分して出生順位を見る方法 | 顔 | 眉 | 1 |
 | `eyebrow_omens_collection` | 眉の一行占い(玄龍子相法より・伝統的な短句集) | 顔 | 眉 | 5 |
 
-## nose.js (12項目)
+## nose.js (24項目)
 
 | key | name | category | role | options数 |
 |---|---|---|---|---|
@@ -154,3 +154,32 @@
 | `nose_female_fortune_correlation` | 女性の鼻の高低と夫婦運・自己主張の伝統的解釈 | 顔 | 鼻 | 2 |
 | `nose_climate_adaptation_theory` | 鼻の高低と気候適応の一般論 | 顔 | 鼻 | 1 |
 | `nose_mole_wealth_sign` | 小鼻周辺(食禄・食倉)のホクロと財運 | 顔 | 鼻 | 1 |
+| `nose_aging_pattern_by_life_stage` | 年代による鼻の変化(幼年・中年・老年の鼻向き) | 顔 | 鼻 | 3 |
+| `nose_root_intellect_development` | 山根の高さと知能・思春期の発達 | 顔 | 鼻 | 3 |
+| `nose_root_health_constitution_link` | 山根の高低と生来の体質・疾厄運 | 顔 | 鼻 | 3 |
+| `nose_root_temperament_reading` | 山根の太さ・陥没度と気性の傾向 | 顔 | 鼻 | 2 |
+| `nose_mole_life_stage_omens` | 鼻の中心線上のホクロ位置と年代別の伝統的な暗示 | 顔 | 鼻 | 2 |
+| `nose_mole_confinement_omen` | 山根周辺のホクロにまつわる伝統的な言い伝え | 顔 | 鼻 | 2 |
+| `nose_wing_dog_type_wealth` | 小鼻(金甲)が肉厚で丸く張った「犬鼻」型の金銭感覚 | 顔 | 鼻 | 1 |
+| `nose_nostril_visibility_money_type` | 正面から見た鼻の穴の見え方と金銭感覚 | 顔 | 鼻 | 2 |
+| `nose_color_red_meaning` | 鼻の色が赤みを帯びる相の伝統的な意味 | 顔 | 鼻 | 2 |
+| `nose_profile_western_classification` | 横顔の輪郭による分類(ローマ鼻・ギリシャ鼻・団子鼻など) | 顔 | 鼻 | 5 |
+| `nose_habit_touch_fidget_sign` | 鼻を触る・いじる癖と心理状態の伝統的な見方 | 顔 | 鼻 | 2 |
+| `nose_tip_fortune_timing` | 準頭(鼻先)の発達時期と運の巡り方の伝統的対応 | 顔 | 鼻 | 2 |
+
+## nasolabial.js (12項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `nasolabial_concept_and_body_parts` | 法令とは何か(君主・将軍・小人形法との対応) | 顔 | 法令 | 1 |
+| `nasolabial_length_stability` | 法令の長さと職業の安定性 | 顔 | 法令 | 2 |
+| `nasolabial_width_business_type` | 法令の広がり方と職業タイプ(組織向き・自由業向き) | 顔 | 法令 | 2 |
+| `nasolabial_age_flow_reference` | 法令にまつわる年齢の目安(流年) | 顔 | 法令 | 2 |
+| `nasolabial_defect_marks_meaning` | 法令の切れ目・ホクロ・キズの意味 | 顔 | 法令 | 2 |
+| `nasolabial_entering_mouth_pattern` | 法令が口へ入る相の伝統的な解釈 | 顔 | 法令 | 2 |
+| `nasolabial_color_reading` | 法令に現れる色(赤み)の伝統的な意味 | 顔 | 法令 | 2 |
+| `nasolabial_double_line_pattern` | 二重法令・支線のある相 | 顔 | 法令 | 2 |
+| `nasolabial_mole_position_meaning` | 法令上のホクロの位置と家業・境界の暗示 | 顔 | 法令 | 1 |
+| `nasolabial_symmetry_curve_reading` | 法令の左右対称性・曲がり方と運勢 | 顔 | 法令 | 2 |
+| `nasolabial_foot_injury_correlation` | 法令の色の黒ずみと足のケガ・事故の伝統的対応 | 顔 | 法令 | 2 |
+| `nasolabial_root_metaphor` | 法令をなだらかな木の根にたとえる比喩 | 顔 | 法令 | 1 |

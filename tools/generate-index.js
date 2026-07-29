@@ -33,6 +33,7 @@ const DATA_FILES = [
   'hair.js',
   'eyebrows.js',
   'nose.js',
+  'nasolabial.js',
 ];
 
 function loadParts(filename) {

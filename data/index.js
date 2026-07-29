@@ -25,6 +25,7 @@
  *    - hair.js         → root.HAIR                (確定)
  *    - eyebrows.js     → root.EYEBROWS             (第七輯で追加・確定)
  *    - nose.js         → root.NOSE                 (第七輯・第八輯で追加・確定)
+ *    - nasolabial.js   → root.NASOLABIAL            (第八輯「法令の相」で追加・確定)
  *
  *    core.js 等5ファイルの実際のグローバル変数名がこれと違う場合は、
  *    下のブラウザ分岐の該当行を実際の名前に書き換えてください。
@@ -59,7 +60,8 @@
       safeRequire('./forehead_extra.js'),
       safeRequire('./hair.js'),
       safeRequire('./eyebrows.js'),
-      safeRequire('./nose.js')
+      safeRequire('./nose.js'),
+      safeRequire('./nasolabial.js')
     );
   } else {
     root.PARTS = factory(
@@ -76,7 +78,8 @@
       root.FOREHEAD_EXTRA,
       root.HAIR,
       root.EYEBROWS,
-      root.NOSE
+      root.NOSE,
+      root.NASOLABIAL
     );
   }
 }(typeof self !== 'undefined' ? self : this, function (
@@ -93,7 +96,8 @@
   foreheadExtra,
   hair,
   eyebrows,
-  nose
+  nose,
+  nasolabial
 ) {
   function arr(x) {
     return Array.isArray(x) ? x : [];
@@ -113,6 +117,7 @@
     arr(foreheadExtra),
     arr(hair),
     arr(eyebrows),
-    arr(nose)
+    arr(nose),
+    arr(nasolabial)
   );
 }));

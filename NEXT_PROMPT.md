@@ -2,8 +2,8 @@
 
 ninso-repo(人相占いPWA)の拡張データ作業の続きです。
 **このリポジトリは整理済みです。** 重複ファイル・古いzip・空ファイルは
-削除し、`data/index.js` は実際に動作確認済みです(第七輯・第八輯分の
-`eyebrows.js` / `nose.js` も正式にマージ・動作確認済み)。
+削除し、`data/index.js` は実際に動作確認済みです(第四輯〜第八輯分すべて
+マージ・動作確認済み。合計120項目・重複keyなし)。
 
 ## 現在の構成(第四輯〜第八輯 取り込み後、整理済み)
 
@@ -26,9 +26,10 @@ ninso-repo/
 │    ├── forehead_extra.js (額・骨相学 11項目) ★第六輯で追加
 │    ├── hair.js (毛髪。新カテゴリ「毛髪」 7項目) ★第六輯で追加
 │    ├── eyebrows.js (顔・眉 15項目) ★第七輯で追加
-│    ├── nose.js (顔・鼻 12項目) ★第七輯・第八輯で追加
+│    ├── nose.js (顔・鼻 24項目) ★第七輯・第八輯で追加(第八輯で12項目追加)
+│    ├── nasolabial.js (顔・法令 12項目) ★第八輯で新規追加
 │    └── index.js (↑を1本のPARTS配列に集約、UMD形式。動作確認済み・
-│         合計96項目、重複key無し)
+│         合計120項目、重複key無し)
 ├── tools/generate-index.js (DATA_FILES配列、`npm run index`で
 │    docs/DATA_INDEX.md を自動生成。動作確認済み)
 ├── source/notes.md (出典・採用/除外方針。第四〜八輯分すべて追記済み)
@@ -36,53 +37,37 @@ ninso-repo/
 │    ├── progress.md (作業ログ。第四〜八輯分すべて追記済み)
 │    ├── DATA_INDEX.md (自動生成物。npm run index の最新出力)
 │    └── UI_PROPOSAL.md (手相の掌マップUI案。実装はまだ)
-├── package.json (★今回作成。"index"スクリプトあり)
-├── .gitignore (★今回作成。node_modules/ *.zip等を除外)
-└── README.md (★今回作成。簡単な説明)
+├── package.json ("index"スクリプトあり)
+├── .gitignore (node_modules/ *.zip等を除外)
+└── README.md (簡単な説明)
 ```
 
-### 今回(整理セッション)やったこと
+### 今回(第八輯・鼻の相続き & 法令の相 対応セッション)やったこと
 
-- リポジトリ全体がかなり散らかっていた(ルート直下に `data/` や
-  `docs/` と同じファイルが重複、`files/` フォルダ、
-  `ninso-repo-update-4th/` フォルダ、`*.zip` が複数リポジトリ内に
-  そのままコミットされていた)ため、すべて棚卸しして削除・統合した。
-- `source/notes_additions.md` → `source/notes.md` に統合(削除)。
-- `docs/progress_addition.md` → `docs/progress.md` に統合(削除)。
-- `data/phrenology_additions.js` は中身が `data/phrenology.js` と
-  完全に同じ3項目だった(=既にマージ済み)ため削除。
-- `package.json` / `.gitignore` / `README.md` が0バイトだったため
-  最低限の内容で新規作成。特に `package.json` が空だと
-  `require()` が壊れる(Invalid package config)ことが判明したため
-  修正必須だった。
-- 第六輯分(`forehead_extra.js` / `hair.js`)を `data/` に追加し、
-  `data/index.js` と `tools/generate-index.js` の両方に反映。
-- `node -e "require('./data/index.js')"` で実行確認し、
-  **合計69項目・重複key無し・カテゴリ = 骨相学/手相/顔/毛髪** を確認済み。
-- `npm run index` の実行も確認済み(`docs/DATA_INDEX.md` 生成成功)。
-
-### 今回(第七輯・第八輯対応セッション)やったこと
-
-- 前セッションでは実ファイルが未アップロードだったため、暫定的に
-  `eyebrow_` / `nose_` プレフィックス付きキーで別パッケージ
-  (`ninso_vol7_addition.zip`)として渡していた。
-- 本セッションで実ファイル一式(`ninso-repo-clean.zip`)を受領し確認した
-  結果、`core.js` / `constitution.js` / `five_elements.js` /
-  `face_shape.js` / `body.js` / `app/app.js` は**すべて0バイト(空)**
-  であることが判明。眉・鼻データの重複懸念は実際にはなかった。
-- `data/eyebrows.js`(眉・15項目)、`data/nose.js`(鼻・12項目)を
-  `forehead_extra.js` と同じUMDパターン(`root.EYEBROWS` /
-  `root.NOSE`)に整形し直し、正式にリポジトリへ追加。
-- `data/index.js`(コメント・require一覧・root参照・concat配列)と
-  `tools/generate-index.js` の `DATA_FILES` 配列の両方を更新。
-- `node -e "require('./data/index.js')"` で実行確認し、
-  **合計96項目・重複key無し** を確認済み。
-- `node tools/generate-index.js` を実行し `docs/DATA_INDEX.md` を
-  再生成済み。
-- `source/notes.md` と `docs/progress.md` は、今回から**別ファイルに
-  分けず本体に直接追記**する方式に変更した(以前は
-  `*_vol6_addendum.md` のような別ファイルで渡していたが、実ファイルが
-  手元にある場合は本体へ直接マージする方が確実なため)。
+- 第八輯PDF(鼻の相の続き、及び「人相学詳論(五)法令の相」)を読み込み、
+  `data/nose.js` に12項目を追加(計24項目)。年代による鼻の変化、
+  山根の高さと知能・体質・気性、鼻のホクロの年代別暗示、犬鼻型の金銭感覚、
+  鼻の穴の見え方、鼻の赤みの意味、横顔輪郭の分類(ローマ鼻・ギリシャ鼻等)、
+  鼻をいじる癖、準頭の発達時期を収録。
+- 新規ファイル `data/nasolabial.js`(category「顔」role「法令」・12項目)を
+  追加。法令の定義、長さと職業安定性、広がり方と職業タイプ、年齢の目安、
+  切れ目・ホクロ・キズ、口へ入る相、色の読み方、二重法令、ホクロと家業、
+  左右対称性、足のケガとの対応、木の根の比喩を収録。
+- `data/index.js`(Node側require一覧・ブラウザ側root参照・factory引数・
+  concat配列すべて)と `tools/generate-index.js` の `DATA_FILES` 配列を更新。
+- `node -e "require('./data/index.js')"` で実行確認し、**合計120項目・
+  重複key無し**を確認済み。「顔/鼻」24項目、「顔/法令」12項目(新設)。
+- `node tools/generate-index.js` を実行し `docs/DATA_INDEX.md` を再生成済み。
+- `source/notes.md` / `docs/progress.md` に採用/除外の記録・作業ログを追記済み。
+- 山根・横筋と夫婦の性的相性・不感症を結びつける章の大部分、生殖器官
+  (睾丸・卵巣)と鼻を対応づける記述、脱税を苦にした自殺の実例エピソード、
+  芥川龍之介の小説・隆鼻術の歴史逸話・実名を用いた具体例などは除外方針に
+  従い除外(詳細は `source/notes.md` 参照)。
+- 「ユダヤ鼻」等の民族名を冠した性格描写は、民族名を外して形態・性格描写
+  のみを抽出する方針で処理(`nose_profile_western_classification`)。
+- 第八輯収録の40種類前後の鼻の横顔カタログ(類似記述の反復が多い)は、
+  代表的な5分類(ローマ鼻・ギリシャ鼻・団子鼻・シラノ型・くぼみ型)に
+  まとめて集約収録した。個別の図ごとの詳細差分は今回は未収録。
 
 ## ★重要: これまでに使った key の完全一覧(実ファイルから確認済み)
 
@@ -119,7 +104,7 @@ ninso-repo/
   `line_fate`, `line_sun`, `line_health`, `line_marriage`,
   `line_age_reference`
 
-### 顔・額・眉・鼻(category: "顔")
+### 顔・額・眉・鼻・法令(category: "顔")
 
 - `data/forehead_extra.js`(役割=額、一部「色」): `forehead_three_sections`,
   `forehead_three_qualities_shape`, `forehead_fuji_shape`,
@@ -127,7 +112,7 @@ ninso-repo/
   `forehead_color_reading`(役割=色), `forehead_mole_position`,
   `forehead_birth_order_belief`, `forehead_symmetry`,
   `glabella_health_sign`(役割=色)
-- `data/eyebrows.js`(役割=眉。第七輯で追加): `eyebrow_terminology_confidant_palace`,
+- `data/eyebrows.js`(役割=眉): `eyebrow_terminology_confidant_palace`,
   `eyebrow_gender_typical_shape`, `eyebrow_thickness_temperament`,
   `eyebrow_tail_angle_clockface`, `eyebrow_eye_distance_tainaku`,
   `eyebrow_glabella_width_personality`, `eyebrow_hair_density_texture`,
@@ -135,13 +120,27 @@ ninso-repo/
   `eyebrow_sparse_gap_pattern`, `eyebrow_long_hair_longevity`,
   `eyebrow_mole_three_dangers`, `eyebrow_sibling_count_reading`,
   `eyebrow_birth_order_zones`, `eyebrow_omens_collection`
-- `data/nose.js`(役割=鼻。第七輯・第八輯で追加): `nose_tree_metaphor_structure`,
-  `nose_length_ratio_standard`, `nose_bridge_shape_types`,
-  `nose_tip_three_qualities`, `nose_wing_size_reading`,
-  `nose_bone_prominence_type`, `nose_profile_curve_types`,
-  `nose_tip_shape_hook_droop`, `nose_length_type_classification`,
-  `nose_female_fortune_correlation`, `nose_climate_adaptation_theory`,
-  `nose_mole_wealth_sign`
+- `data/nose.js`(役割=鼻。第七輯・第八輯で追加、計24項目):
+  - 第七輯分: `nose_tree_metaphor_structure`, `nose_length_ratio_standard`,
+    `nose_bridge_shape_types`, `nose_tip_three_qualities`,
+    `nose_wing_size_reading`, `nose_bone_prominence_type`,
+    `nose_profile_curve_types`, `nose_tip_shape_hook_droop`,
+    `nose_length_type_classification`, `nose_female_fortune_correlation`,
+    `nose_climate_adaptation_theory`, `nose_mole_wealth_sign`
+  - 第八輯分(★今回追加): `nose_aging_pattern_by_life_stage`,
+    `nose_root_intellect_development`, `nose_root_health_constitution_link`,
+    `nose_root_temperament_reading`, `nose_mole_life_stage_omens`,
+    `nose_mole_confinement_omen`, `nose_wing_dog_type_wealth`,
+    `nose_nostril_visibility_money_type`, `nose_color_red_meaning`,
+    `nose_profile_western_classification`, `nose_habit_touch_fidget_sign`,
+    `nose_tip_fortune_timing`
+- `data/nasolabial.js`(役割=法令。★第八輯で新規追加、12項目):
+  `nasolabial_concept_and_body_parts`, `nasolabial_length_stability`,
+  `nasolabial_width_business_type`, `nasolabial_age_flow_reference`,
+  `nasolabial_defect_marks_meaning`, `nasolabial_entering_mouth_pattern`,
+  `nasolabial_color_reading`, `nasolabial_double_line_pattern`,
+  `nasolabial_mole_position_meaning`, `nasolabial_symmetry_curve_reading`,
+  `nasolabial_foot_injury_correlation`, `nasolabial_root_metaphor`
 
 ### 毛髪(category: "毛髪") ★第六輯で新設
 
@@ -153,24 +152,21 @@ ninso-repo/
 ### 顔全体・体質・五行・輪郭・身体(未着手・空ファイル)
 
 `core.js` / `constitution.js` / `five_elements.js` / `face_shape.js` /
-`body.js` は **中身が空(0バイト)であることを本セッションで実ファイル
-から直接確認済み** です。これらは第四〜八輯では触れていません。
-**このリポジトリではまだ一切のデータが入っていない**ので、新しいkeyを
-作る際に重複を心配する必要はありませんが、逆に言うと顔全体・体質・
-五行・輪郭・身体まわりのデータが丸ごと空白になっている状態です。
-優先度高めで着手する価値があります(眉・鼻は `eyebrows.js` /
-`nose.js` として今回埋まったので、`core.js` は残りの顔パーツ
-(目・口・耳・顎・気色)を対象にする形になります)。
+`body.js` は **中身が空(0バイト)** のまま。これらは第四〜八輯では
+触れていません。新しいkeyを作る際に重複を心配する必要はありませんが、
+逆に言うと顔全体・体質・五行・輪郭・身体まわりのデータが丸ごと空白に
+なっている状態です。優先度高めで着手する価値があります(眉・鼻・法令は
+それぞれ `eyebrows.js` / `nose.js` / `nasolabial.js` として埋まったので、
+`core.js` は残りの顔パーツ(目・口・耳・顎・気色)を対象にする形になります)。
 
 ## 引き継ぎ・注意事項(累積)
 
 1. **私(Claude)はユーザーのローカルPCにもGitHubリモートにも直接
    アクセスできません。** 「zipを作って渡す→ユーザーが手元で展開・
    上書き・commit・push」という流れになります。
-2. **今回、実ファイル一式(zip)を受け取り、中を確認しながら
-   直接マージ・整理しました。** 今後もこの形(リポジトリ全体を
-   zipでアップロードしてもらう)を継続してください。差分ファイルだけ
-   渡すよりも、整理・重複解消がしやすく確実です。
+2. **実ファイル一式(zip)を受け取り、中を確認しながら直接マージ・
+   整理する方式を継続してください。** 差分ファイルだけ渡すよりも、
+   整理・重複解消がしやすく確実です。
 3. **UIは保留を継続中。** `app/assets/palm-zones.svg` と
    `docs/UI_PROPOSAL.md` は用意済みだが実装はしていない。明示的な
    指示があるまでデータ拡充を優先する。
@@ -178,14 +174,17 @@ ninso-repo/
    別の座標系。** UI設計時に要検討(`docs/progress.md`参照)。
 5. **将来機能のメモ:** 写真やFaceTime等のリアルタイム対面からの
    即時鑑定機能は、データ拡充が一段落してから設計する。今は着手しない。
-6. **`data/core.js` 等5ファイルが空のまま。** 眉・鼻は `eyebrows.js` /
-   `nose.js` で埋まったので、残りは顔全体(目・口・耳・顎・気色)・
-   体質・五行・輪郭・身体。優先度高めで着手を検討してよい(次回、
-   着手するか確認してから進める)。
+6. **`data/core.js` 等5ファイルが空のまま。** 眉・鼻・法令は埋まったので、
+   残りは顔全体(目・口・耳・顎・気色)・体質・五行・輪郭・身体。
+   優先度高めで着手を検討してよい(次回、着手するか確認してから進める)。
 7. **`package.json`が空だと `require()` が全滅する**ことが判明済み。
    今後、空ファイルのプレースホルダーをコミットしないよう注意。
 8. **`*.zip` は `.gitignore` 済み。** 今後、配布用zipをリポジトリ内に
    直接コミットしないこと。
+9. **(第八輯で追加)** 鼻の横顔カタログのように、原本に類似記述が大量に
+   反復収録されている章がある場合、全項目を逐一データ化するのではなく、
+   代表的な分類にまとめて集約収録することも許容する(今回は40種前後→
+   5分類に集約)。個別詳細化が必要になった場合は原本を再確認して追加すればよい。
 
 ## 除外方針(恒久・累積。`source/notes.md`にも記載済み)
 
@@ -199,22 +198,24 @@ ninso-repo/
    (差別的ステレオタイプを含むもの)。形態上の一般概念(長頭・円頭等)
    だけを、特定の集団に結びつけない形で抽出するのは可
 3. 精神疾患・自殺を身体的特徴と安易に結びつけるスティグマ的な記述
-   (例: 指の歪みと発狂・自殺の相関)
+   (例: 指の歪みと発狂・自殺の相関、悩みを苦にした自殺の実例エピソード)
 4. 特定の病名を診断的に示唆する記述(例: 爪の型が直接「脳溢血型」
    「心臓病型」等の病名になっているもの)。一般化した体質・体力表現に
    置き換えるのは可
 5. 診断データそのものではない付随コンテンツ(読者質問コーナー、
    商品広告、寄生虫等の医学豆知識、参考書籍紹介、法医学トリビアや
-   作家・有名人にまつわる余談エピソード)は単純に対象外
+   作家・有名人にまつわる余談エピソード、美容外科・歴史トリビア、
+   実名を用いた具体的な個人の実例エピソード)は単純に対象外
    (除外理由の記録も不要)
 6. 人相・骨相を性風俗業(遊女・男娼など)の顧客分類や営業ノウハウ
    として解説する記述は、診断データ化せず、存在した事実のみを
    記録する。単純な風俗史的言及(例:特定の職業で眉を剃る習慣が
    あった、という事実の言及)は対象外として扱ってよい。
-7. **(第七輯で追加)** 「ユダヤ鼻」のように性格描写に民族名が慣用的に
-   使われている古い俗称が出てきた場合、①完全除外、②民族名を外して
-   形態のみ抽出、③偏見的解釈を戒める注記つきで採用、のいずれかを
-   都度判断する(`nose_profile_curve_types` では③を採用した)。
+7. 「ユダヤ鼻」のように性格描写に民族名が慣用的に使われている古い俗称が
+   出てきた場合、①完全除外、②民族名を外して形態のみ抽出、③偏見的解釈を
+   戒める注記つきで採用、のいずれかを都度判断する(第七輯の
+   `nose_profile_curve_types` では③、第八輯の
+   `nose_profile_western_classification` では②を採用した)。
 
 ## 未着手で残っている非性的な章
 
@@ -229,9 +230,9 @@ ninso-repo/
 - 手相の「指の動きによる兆占い」→ 別データ構造(`data/omens.js`案)を
   検討するか判断
 - 掌線と年齢目盛りの精密な図解(今回は概念のみ採用、精密な座標は未採用)
-- 鼻の相の続き(準頭・人中・法令・鼻孔の詳細、鼻と口の対応など。
-  今回は総論部分のみ収録。原本に続きがあれば次回対応)
+- 鼻の横顔40分類カタログの個別詳細化(今回は代表5分類に集約収録のみ)
 - 目・口・耳・顎・気色(`core.js`が空のため丸ごと未着手)
+- 法令の相の続き(人中・地閣・口周辺との対応など、原本に続きがあれば)
 
 ## 今回やってほしいこと
 
