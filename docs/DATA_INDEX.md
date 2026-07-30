@@ -1,4 +1,4 @@
-<!-- 合計 120 項目 / 生成日時: 2026-07-29T09:21:04.779Z -->
+<!-- 合計 130 項目 / 生成日時: 2026-07-30T09:29:30.078Z -->
 
 # データ一覧(自動生成)
 
@@ -183,3 +183,18 @@
 | `nasolabial_symmetry_curve_reading` | 法令の左右対称性・曲がり方と運勢 | 顔 | 法令 | 2 |
 | `nasolabial_foot_injury_correlation` | 法令の色の黒ずみと足のケガ・事故の伝統的対応 | 顔 | 法令 | 2 |
 | `nasolabial_root_metaphor` | 法令をなだらかな木の根にたとえる比喩 | 顔 | 法令 | 1 |
+
+## philtrum.js (10項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `philtrum_definition_zones` | 人中の定義と周辺部位(禄倉・食倉)の位置関係 | 顔 | 人中 | 2 |
+| `philtrum_aging_pattern` | 年代による人中の変化(幼年・中年・老年の長さ・幅・上下の太さ) | 顔 | 人中 | 3 |
+| `philtrum_length_lifespan_correlation` | 人中の長短と寿命・童顔との相関 | 顔 | 人中 | 2 |
+| `philtrum_curve_and_foot_correlation` | 人中の曲がりと性格・利き足の伝統的対応 | 顔 | 人中 | 2 |
+| `philtrum_mole_position_meaning` | 人中周辺(A・B・C・D)のホクロ位置による伝統的な意味 | 顔 | 人中 | 3 |
+| `philtrum_width_life_stability` | 人中の広さ・狭さと生活の安定度 | 顔 | 人中 | 2 |
+| `philtrum_horizontal_line_hardship` | 人中に入る横筋と生活苦・食物の欠乏の伝統的な見方 | 顔 | 人中 | 2 |
+| `philtrum_shape_child_gender_folk_belief` | 人中のカーブ形状による子供の性別判断の言い伝え | 顔 | 人中 | 2 |
+| `philtrum_mustache_growth_style` | ヒゲの生やし方(人中・法令沿い)と伝統的な運命観 | 顔 | 人中 | 2 |
+| `philtrum_marriage_and_late_life_fortune` | 人中の形状と夫婦運・晩年運の総括的な伝統的解釈 | 顔 | 人中 | 2 |

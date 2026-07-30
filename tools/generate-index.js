@@ -34,6 +34,7 @@ const DATA_FILES = [
   'eyebrows.js',
   'nose.js',
   'nasolabial.js',
+  'philtrum.js',
 ];
 
 function loadParts(filename) {

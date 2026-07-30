@@ -61,7 +61,8 @@
       safeRequire('./hair.js'),
       safeRequire('./eyebrows.js'),
       safeRequire('./nose.js'),
-      safeRequire('./nasolabial.js')
+      safeRequire('./nasolabial.js'),
+      safeRequire('./philtrum.js')
     );
   } else {
     root.PARTS = factory(
@@ -79,7 +80,8 @@
       root.HAIR,
       root.EYEBROWS,
       root.NOSE,
-      root.NASOLABIAL
+      root.NASOLABIAL,
+      root.PHILTRUM
     );
   }
 }(typeof self !== 'undefined' ? self : this, function (
@@ -97,7 +99,8 @@
   hair,
   eyebrows,
   nose,
-  nasolabial
+  nasolabial,
+  philtrum
 ) {
   function arr(x) {
     return Array.isArray(x) ? x : [];
@@ -118,6 +121,7 @@
     arr(hair),
     arr(eyebrows),
     arr(nose),
-    arr(nasolabial)
+    arr(nasolabial),
+    arr(philtrum)
   );
 }));
