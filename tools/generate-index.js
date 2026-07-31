@@ -35,6 +35,10 @@ const DATA_FILES = [
   'nose.js',
   'nasolabial.js',
   'philtrum.js',
+  'mouth.js',
+  'teeth.js',
+  'ear.js',
+  'cheekbone.js',
 ];
 
 function loadParts(filename) {

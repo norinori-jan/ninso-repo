@@ -1,4 +1,4 @@
-<!-- 合計 130 項目 / 生成日時: 2026-07-30T09:29:30.078Z -->
+<!-- 合計 174 項目 / 生成日時: 2026-07-31T10:56:49.593Z -->
 
 # データ一覧(自動生成)
 
@@ -198,3 +198,67 @@
 | `philtrum_shape_child_gender_folk_belief` | 人中のカーブ形状による子供の性別判断の言い伝え | 顔 | 人中 | 2 |
 | `philtrum_mustache_growth_style` | ヒゲの生やし方(人中・法令沿い)と伝統的な運命観 | 顔 | 人中 | 2 |
 | `philtrum_marriage_and_late_life_fortune` | 人中の形状と夫婦運・晩年運の総括的な伝統的解釈 | 顔 | 人中 | 2 |
+
+## mouth.js (12項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `mouth_lower_lip_taste_sensitivity` | 下唇の発達と味覚の鋭さ・料理の才能 | 顔 | 口 | 2 |
+| `mouth_size_vitality_elasticity` | 口の大きさ・弾力性と生活力 | 顔 | 口 | 2 |
+| `mouth_protrusion_instinct_type` | 口元の突出度と本能的傾向 | 顔 | 口 | 2 |
+| `lip_thickness_altruism_selfishness` | 上唇・下唇の厚さと利他性・利己性 | 顔 | 口 | 2 |
+| `mouth_size_ambition_scale` | 口の大きさと事業欲・度量 | 顔 | 口 | 2 |
+| `lip_line_clarity_chastity` | 上唇の輪郭線と自制心の伝統的な見方 | 顔 | 口 | 2 |
+| `lip_color_health_omen` | 唇の色と健康状態・体調の目安 | 顔 | 口 | 3 |
+| `mouth_expression_habit_fortune` | 話す時の口元の癖と運気の目安 | 顔 | 口 | 2 |
+| `lip_mole_speech_caution` | 唇周辺のホクロと言葉・出費を慎む戒め | 顔 | 口 | 1 |
+| `smile_teeth_gum_visibility` | 笑った時の歯・歯茎の見え方による性格の伝統的な見方 | 顔 | 口 | 3 |
+| `mouth_intake_outtake_restraint` | 口の役割と言語・飲食の慎みの伝統的な戒め | 顔 | 口 | 1 |
+| `mouth_expression_fortune_cultivation` | 口の表情による後天的な開運法 | 顔 | 口 | 1 |
+
+## teeth.js (12項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `tooth_three_types_function` | 歯の三種類(臼歯・犬歯・門歯)とその役割 | 顔 | 歯 | 1 |
+| `tooth_type_ratio_diet_reflection` | 歯の種類の比率と食性の反映 | 顔 | 歯 | 1 |
+| `tooth_organ_correspondence` | 歯と内臓・神経系との伝統的な対応関係 | 顔 | 歯 | 2 |
+| `tooth_anatomy_structure` | 歯の断面構造(琺瑯質・象牙質・歯根) | 顔 | 歯 | 1 |
+| `tooth_eruption_timeline` | 歯の生え変わりの一般的な時期 | 顔 | 歯 | 1 |
+| `tooth_alignment_personality` | 歯並びの乱れと性格の伝統的な見方 | 顔 | 歯 | 2 |
+| `tooth_gap_center_incisors` | 前歯の隙間・欠如と家族運・夫婦運の言い伝え | 顔 | 歯 | 2 |
+| `tooth_pointed_canine_personality` | 犬歯の尖りと家族との関係性の伝統的な見方 | 顔 | 歯 | 2 |
+| `tooth_size_uniformity_reading` | 歯の大きさの揃い方と性格の伝統的な見方 | 顔 | 歯 | 2 |
+| `tooth_color_whiteness_reading` | 歯の白さ・色と健康・生活状態の伝統的な見方 | 顔 | 歯 | 2 |
+| `tooth_folk_belief_hair_nerve` | 歯・体毛・視力にまつわる民間信仰 | 顔 | 歯 | 1 |
+| `tooth_omens_collection` | 歯の一行占い(玄竜子相法より・伝統的な短句集) | 顔 | 歯 | 5 |
+
+## ear.js (11項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `ear_completion_order_belief` | 耳が顔の中で最も早く完成するという伝統的な言い伝え | 顔 | 耳 | 1 |
+| `ear_age_classification_pattern` | 年代による耳の変化(童・中・老の目安) | 顔 | 耳 | 3 |
+| `ear_anatomy_terminology` | 耳介各部の名称(天輪・人輪・地輪・風門) | 顔 | 耳 | 1 |
+| `ear_position_height_reading` | 耳の位置の高さと知性の伝統的な見方 | 顔 | 耳 | 2 |
+| `ear_zone_map_meaning` | 耳の部位対応(心性・智恵・筋骨・意志・営養など) | 顔 | 耳 | 1 |
+| `ear_size_lucky_ear_belief` | 耳の大きさ・福耳の伝統的な意味 | 顔 | 耳 | 2 |
+| `ear_color_health_link` | 耳の色つやと健康状態の伝統的な関連 | 顔 | 耳 | 2 |
+| `ear_lobe_development_by_age` | 耳たぶ(垂珠)の発達具合の年代変化 | 顔 | 耳 | 1 |
+| `ear_rim_development_family_bond` | 耳の輪(天輪)の発達具合と親との縁の伝統的な言い伝え | 顔 | 耳 | 2 |
+| `ear_folk_omens_collection` | 耳にまつわる伝統的な言い伝え集 | 顔 | 耳 | 3 |
+| `ear_orientation_career_suitability` | 耳の向き・立ち方と職業適性の伝統的な見方 | 顔 | 耳 | 2 |
+
+## cheekbone.js (9項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `cheekbone_bone_vs_flesh_prominence` | 観骨の張り方(骨によるものと肉づきによるもの) | 顔 | 観骨 | 2 |
+| `cheekbone_prominent_independence` | 観骨が張った人の仕事運・独立志向の伝統的な見方 | 顔 | 観骨 | 2 |
+| `cheekbone_overprominent_stubbornness` | 観骨の張りすぎと頑固さの伝統的な見方 | 顔 | 観骨 | 1 |
+| `cheekbone_color_trust_reading` | 観骨の血色と商売上の信用の伝統的な見方 | 顔 | 観骨 | 2 |
+| `cheekbone_climate_adaptation_theory` | 観骨の張りと気候適応の一般論 | 顔 | 観骨 | 2 |
+| `cheekbone_side_profile_direction_type` | 観骨の側面での張り方向による性格の伝統的な見方 | 顔 | 観骨 | 3 |
+| `cheekbone_mole_life_stage_omens` | 観骨のホクロ位置と年代別の伝統的な暗示 | 顔 | 観骨 | 3 |
+| `cheekbone_beard_growth_fortune` | 観骨まわりのヒゲの生え方と中年以降の運勢の伝統的な見方 | 顔 | 観骨 | 1 |
+| `cheekbone_low_prominence_personality` | 観骨が目立たない人の性格の伝統的な見方 | 顔 | 観骨 | 1 |

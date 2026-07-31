@@ -62,7 +62,11 @@
       safeRequire('./eyebrows.js'),
       safeRequire('./nose.js'),
       safeRequire('./nasolabial.js'),
-      safeRequire('./philtrum.js')
+      safeRequire('./philtrum.js'),
+      safeRequire('./mouth.js'),
+      safeRequire('./teeth.js'),
+      safeRequire('./ear.js'),
+      safeRequire('./cheekbone.js')
     );
   } else {
     root.PARTS = factory(
@@ -81,7 +85,11 @@
       root.EYEBROWS,
       root.NOSE,
       root.NASOLABIAL,
-      root.PHILTRUM
+      root.PHILTRUM,
+      root.MOUTH,
+      root.TEETH,
+      root.EAR,
+      root.CHEEKBONE
     );
   }
 }(typeof self !== 'undefined' ? self : this, function (
@@ -100,7 +108,11 @@
   eyebrows,
   nose,
   nasolabial,
-  philtrum
+  philtrum,
+  mouth,
+  teeth,
+  ear,
+  cheekbone
 ) {
   function arr(x) {
     return Array.isArray(x) ? x : [];
@@ -122,6 +134,10 @@
     arr(eyebrows),
     arr(nose),
     arr(nasolabial),
-    arr(philtrum)
+    arr(philtrum),
+    arr(mouth),
+    arr(teeth),
+    arr(ear),
+    arr(cheekbone)
   );
 }));
