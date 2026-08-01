@@ -2,16 +2,17 @@
 
 ninso-repo(人相占いPWA)の拡張データ作業の続きです。
 **このリポジトリは整理済みです。** 重複ファイル・古いzip・空ファイルは
-削除し、`data/index.js` は実際に動作確認済みです(第四輯〜第十一輯分すべて
-マージ・動作確認済み。合計174項目・重複keyなし)。
+削除し、`data/index.js` は実際に動作確認済みです(第四輯〜第十一輯+
+眼の相(第十一・十二輯)分すべてマージ・動作確認済み。**合計213項目・
+重複keyなし**)。
 
-## 現在の構成(第四輯〜第十一輯 取り込み後、整理済み)
+## 現在の構成(眼の相 取り込み後、整理済み)
 
 ```
 ninso-repo/
 ├── app/
 │    ├── index.html / app.js / style.css / manifest.json / service-worker.js
-│    │    ★<script>タグの抜けバグを今回修正済み(下記「重要な修正」参照)
+│    │    ★ <script>タグは data/ 配下の全ファイル分を網羅済み(要確認習慣は継続)
 │    └── assets/palm-zones.svg (掌面八卦の簡易参照SVG。UI実装は保留中)
 ├── data/
 │    ├── core.js         ← ★中身が空(0バイト)。未実装のまま
@@ -30,17 +31,18 @@ ninso-repo/
 │    ├── nose.js (顔・鼻 24項目)
 │    ├── nasolabial.js (顔・法令 12項目)
 │    ├── philtrum.js (顔・人中 10項目)
-│    ├── mouth.js (顔・口 12項目) ★第十一輯で追加
-│    ├── teeth.js (顔・歯 12項目) ★第十一輯で追加
-│    ├── ear.js (顔・耳 11項目) ★第十一輯で追加
-│    ├── cheekbone.js (顔・観骨 9項目) ★第十一輯で追加
+│    ├── mouth.js (顔・口 12項目)
+│    ├── teeth.js (顔・歯 12項目)
+│    ├── ear.js (顔・耳 11項目)
+│    ├── cheekbone.js (顔・観骨 9項目)
+│    ├── eyes.js (顔・眼 39項目) ★第十一・十二輯(実質「眼の相」)で追加
 │    └── index.js (↑を1本のPARTS配列に集約、UMD形式。動作確認済み・
-│         合計174項目、重複key無し)
+│         合計213項目、重複key無し)
 ├── tools/generate-index.js (DATA_FILES配列、`npm run index`で
 │    docs/DATA_INDEX.md を自動生成。動作確認済み)
-├── source/notes.md (出典・採用/除外方針。第四〜十一輯分すべて追記済み)
+├── source/notes.md (出典・採用/除外方針。第四〜十一輯+眼の相分すべて追記済み)
 ├── docs/
-│    ├── progress.md (作業ログ。第四〜十一輯分すべて追記済み)
+│    ├── progress.md (作業ログ。第四〜十一輯+眼の相分すべて追記済み)
 │    ├── DATA_INDEX.md (自動生成物。npm run index の最新出力)
 │    └── UI_PROPOSAL.md (手相の掌マップUI案。実装はまだ)
 ├── package.json ("index"スクリプトあり)
@@ -48,41 +50,37 @@ ninso-repo/
 └── README.md (簡単な説明)
 ```
 
-### 今回(第十一輯・口の相(二)・歯の相・耳の相・観骨の相 対応セッション)やったこと
+### 今回(第十一・十二輯・実質「眼の相(一)〜(四)」対応セッション)やったこと
 
-- 第十一輯PDFを読み込んだ。**前回の引き継ぎでは「頬・顎」が次点候補として
-  想定されていたが、実際のPDFの内容は「口の相の続き・歯の相・耳の相・
-  観骨の相」の4章だった。** 頬・顎(人相学詳論十四・十五)は今回も未着手の
-  まま持ち越し。
-- 新規ファイル4つを追加:
-  - `data/mouth.js`(category「顔」role「口」・12項目)
-  - `data/teeth.js`(category「顔」role「歯」・12項目)
-  - `data/ear.js`(category「顔」role「耳」・11項目)
-  - `data/cheekbone.js`(category「顔」role「観骨」・9項目)
+- 受領したPDFの表紙号数表記は「第十一・十二輯」だったが、実際の内容は
+  人相学詳論(二十一)〜(二十四)「眼の相(一)〜(四)」の4章だった
+  (前回の引き継ぎメモで「次回は目の相の可能性が高い」と想定していた
+  通りの内容)。
+- 新規ファイル1つを追加:
+  - `data/eyes.js`(category「顔」role「眼」・39項目)。眼の重要性・
+    各部位名称・年齢による変化・三質論・眼の形の基本用語・大小/出眼/
+    凹眼の性格・田宅(眉と眼の間)・ホクロ俗信・左右差・象眼・上り眼
+    下り眼・魚尾筋・桃花眼/蛇眼の俗称・二重/一重まぶた・赤脈瞳孔の
+    俗信集・瞳の色・三眼六神の法・胎(白目)の色つや・瞳孔十二相秘伝・
+    達磨相眼法七条・瞳孔の大小と意志力/地域 など、原本4章分の主要
+    トピックを幅広くカバー。
 - `data/index.js`(Node側require一覧・ブラウザ側root参照・factory引数・
-  concat配列すべて)と `tools/generate-index.js` の `DATA_FILES` 配列を更新。
-- **重要な修正(バグ発見):** `app/index.html` の `<script>` タグに、
-  過去セッションから存在していた抜けを発見・修正した。`data/index.js` は
-  以前から `forehead_extra.js` / `hair.js` / `eyebrows.js` / `nose.js` /
-  `nasolabial.js` / `philtrum.js` を参照していたが、`app/index.html` には
-  これらの `<script>` タグが一つも追加されておらず、**実際にブラウザで
-  開くとこれら6ファイル・計79項目のデータが読み込まれない状態だった。**
-  今回、不足分6ファイルと新規4ファイル、計10個の `<script>` タグを
-  `app/index.html` に追加して修正済み。次回もし `app.js` 側で新しい
-  データファイルを追加する場合は、`index.js` の登録だけでなく
-  **必ず `app/index.html` の `<script>` タグも追加すること**。
-- `node -e "require('./data/index.js')"` で実行確認し、**合計174項目・
-  重複keyなし**を確認済み。「顔/口」12項目・「顔/歯」12項目・
-  「顔/耳」11項目・「顔/観骨」9項目(いずれも新設)。
+  concat配列すべて)と `tools/generate-index.js` の `DATA_FILES` 配列を
+  `eyes.js` 追加で更新。
+- `app/index.html` に `<script src="../data/eyes.js"></script>` を
+  `cheekbone.js` の直後・`index.js` の直前に追加(過去に発覚した
+  script抜けバグの再発防止のため、既存の全`<script>`タグも確認済み)。
+- `node -e "require('./data/index.js')"` で実行確認し、**合計213項目・
+  重複keyなし**を確認済み。「顔/眼」39項目(新設)。
 - `node tools/generate-index.js` を実行し `docs/DATA_INDEX.md` を再生成済み。
 - `source/notes.md` / `docs/progress.md` に採用/除外の記録・作業ログを追記済み。
-- 唇の色と陰部の色の対応(除外方針①)、女囚の歯並び統計と犯罪傾向の直接的
-  結びつけ(除外方針8)、皇室・実名俳優/女優・実名経済人への直接言及
-  (除外方針⑤に準じ一般化)、貴人・賤人という身分階層と耳の相の対応
-  (除外方針②)、観骨の血色から性病罹患リスクを診断的に示唆する記述
-  (除外方針①④⑥)などを除外方針に従い除外(詳細は `source/notes.md` 参照)。
-- 原本の末尾に「次回はいよいよ画龍点睛の、眼の相法に入る」旨の記載が
-  あったため、**次回のPDFは「目の相」の可能性が高い。**
+- 実在の政治家・経済人・俳優・音楽家・歴史上の人物への直接言及、出眼と
+  甲状腺疾患等の特定病名の診断的示唆、出眼・桃花眼と性的奔放さの相関、
+  四方白眼・車輪眼と犯罪傾向(反逆・殺人・少年刑務所統計)の直接的結びつけ、
+  二重まぶたの本数を「本妻」「二号さん」という身分づけに結びつける記述、
+  蒙古ひだ説明での民族名列挙、法医学トリビア(死体の瞳孔の状態)などを
+  除外方針に従い除外(詳細は `source/notes.md` 参照)。瞳孔十二相秘伝は
+  原文の逐条列挙ではなく概要として要約し、神秘的伝承である旨の注記を付与。
 
 ## ★重要: これまでに使った key の完全一覧(実ファイルから確認済み)
 
@@ -119,7 +117,7 @@ ninso-repo/
   `line_fate`, `line_sun`, `line_health`, `line_marriage`,
   `line_age_reference`
 
-### 顔・額・眉・鼻・法令・人中・口・歯・耳・観骨(category: "顔")
+### 顔・額・眉・鼻・法令・人中・口・歯・耳・観骨・眼(category: "顔")
 
 - `data/forehead_extra.js`(役割=額、一部「色」): `forehead_three_sections`,
   `forehead_three_qualities_shape`, `forehead_fuji_shape`,
@@ -161,33 +159,53 @@ ninso-repo/
   `philtrum_width_life_stability`, `philtrum_horizontal_line_hardship`,
   `philtrum_shape_child_gender_folk_belief`, `philtrum_mustache_growth_style`,
   `philtrum_marriage_and_late_life_fortune`
-- `data/mouth.js`(役割=口。★第十一輯で新規追加、12項目):
+- `data/mouth.js`(役割=口。12項目):
   `mouth_lower_lip_taste_sensitivity`, `mouth_size_vitality_elasticity`,
   `mouth_protrusion_instinct_type`, `lip_thickness_altruism_selfishness`,
   `mouth_size_ambition_scale`, `lip_line_clarity_chastity`,
   `lip_color_health_omen`, `mouth_expression_habit_fortune`,
   `lip_mole_speech_caution`, `smile_teeth_gum_visibility`,
   `mouth_intake_outtake_restraint`, `mouth_expression_fortune_cultivation`
-- `data/teeth.js`(役割=歯。★第十一輯で新規追加、12項目):
+- `data/teeth.js`(役割=歯。12項目):
   `tooth_three_types_function`, `tooth_type_ratio_diet_reflection`,
   `tooth_organ_correspondence`, `tooth_anatomy_structure`,
   `tooth_eruption_timeline`, `tooth_alignment_personality`,
   `tooth_gap_center_incisors`, `tooth_pointed_canine_personality`,
   `tooth_size_uniformity_reading`, `tooth_color_whiteness_reading`,
   `tooth_folk_belief_hair_nerve`, `tooth_omens_collection`
-- `data/ear.js`(役割=耳。★第十一輯で新規追加、11項目):
+- `data/ear.js`(役割=耳。11項目):
   `ear_completion_order_belief`, `ear_age_classification_pattern`,
   `ear_anatomy_terminology`, `ear_position_height_reading`,
   `ear_zone_map_meaning`, `ear_size_lucky_ear_belief`,
   `ear_color_health_link`, `ear_lobe_development_by_age`,
   `ear_rim_development_family_bond`, `ear_folk_omens_collection`,
   `ear_orientation_career_suitability`
-- `data/cheekbone.js`(役割=観骨。★第十一輯で新規追加、9項目):
+- `data/cheekbone.js`(役割=観骨。9項目):
   `cheekbone_bone_vs_flesh_prominence`, `cheekbone_prominent_independence`,
   `cheekbone_overprominent_stubbornness`, `cheekbone_color_trust_reading`,
   `cheekbone_climate_adaptation_theory`, `cheekbone_side_profile_direction_type`,
   `cheekbone_mole_life_stage_omens`, `cheekbone_beard_growth_fortune`,
   `cheekbone_low_prominence_personality`
+- `data/eyes.js`(役割=眼。★第十一・十二輯で新規追加、39項目):
+  `eye_importance_overview`, `eye_light_dominant_weight`,
+  `eye_anatomical_parts_names`, `eye_age_related_changes_table`,
+  `eye_pupil_light_response`, `eye_three_qualities_correspondence`,
+  `eye_shape_terminology_types`, `eye_size_personality_large`,
+  `eye_size_personality_small`, `eye_protrusion_type`, `eye_sunken_type`,
+  `tianzhai_eyelid_area_meaning`, `tianzhai_width_fortune`,
+  `tianzhai_texture_reading`, `eye_mole_position_folk_belief`,
+  `eye_asymmetry_left_right_reading`, `eye_asymmetry_inheritance_folk_belief`,
+  `elephant_eye_type`, `eye_tilt_up_down_type`, `eye_corner_shape_reading`,
+  `eyelid_heaviness_type`, `sanbaku_upper_variant_types`,
+  `four_white_eye_caution_reading`, `gyobi_sen_crows_feet_presence`,
+  `gyobi_sen_count_folk_belief`, `peach_blossom_eye_folk_term`,
+  `snake_eye_folk_type`, `double_eyelid_personality`,
+  `single_eyelid_personality`, `epicanthic_fold_description`,
+  `red_vein_pupil_omens_collection`, `eye_color_pupil_meaning`,
+  `eye_color_climate_theory`, `sangan_rokushin_method_intro`,
+  `tai_shirome_color_reading`, `pupil_twelve_palace_method_intro`,
+  `daruma_eye_method_seven_conditions`, `pupil_size_willpower_reading`,
+  `pupil_size_region_folk_theory`
 
 ### 毛髪(category: "毛髪")
 
@@ -199,7 +217,8 @@ ninso-repo/
 ### 顔全体・体質・五行・輪郭・身体(未着手・空ファイル)
 
 `core.js` / `constitution.js` / `five_elements.js` / `face_shape.js` /
-`body.js` は **中身が空(0バイト)** のまま。目・気色は今回も未着手。
+`body.js` は **中身が空(0バイト)** のまま。眼・気色は今回の `eyes.js`
+でかなりカバーしたが、`core.js` ファイル自体はまだ未実装。
 頬・顎は次点候補として引き続き持ち越し中(`data/cheek_jaw.js`案)。
 
 ## 引き継ぎ・注意事項(累積)
@@ -217,29 +236,37 @@ ninso-repo/
    別の座標系。** UI設計時に要検討(`docs/progress.md`参照)。
 5. **将来機能のメモ:** 写真やFaceTime等のリアルタイム対面からの
    即時鑑定機能は、データ拡充が一段落してから設計する。今は着手しない。
-6. **`data/core.js` 等5ファイルが空のまま。** 顔の目・気色、体質、五行、
-   輪郭、身体が残っている。優先度高めで着手を検討してよい(次回、
-   着手するか確認してから進める)。
+6. **`data/core.js` 等5ファイルが空のまま。** 顔の気色(眼以外の部分)、
+   体質、五行、輪郭、身体が残っている。優先度高めで着手を検討してよい
+   (次回、着手するか確認してから進める)。
 7. **`package.json`が空だと `require()` が全滅する**ことが判明済み。
    今後、空ファイルのプレースホルダーをコミットしないよう注意。
 8. **`*.zip` は `.gitignore` 済み。** 今後、配布用zipをリポジトリ内に
    直接コミットしないこと。
 9. **章によっては、原本に類似記述が大量に反復収録されていることがある。**
    全項目を逐一データ化するのではなく、代表的な分類にまとめて集約収録する
-   ことも許容する(例: 第八輯の鼻の横顔40種→5分類に集約)。
+   ことも許容する(例: 第八輯の鼻の横顔40種→5分類に集約、今回の瞳孔十二相
+   秘伝も逐条列挙せず概要に要約)。
 10. **「まずは語彙を増やす戦略」の指示があった場合**、1回のセッションで
     章全体を無理に一度に片付けようとせず、区切りのよい1トピックずつ丁寧に
     データ化する進め方も許容する。
-11. **(第十一輯で追加)新しいPDFの内容が、前回の引き継ぎで想定していた
-    次章と異なる場合がある。** 実際に受領したPDFの目次・見出しを必ず
-    確認し、想定と異なっていたら素直にその内容に沿って作業すること
-    (無理に「頬・顎」等の想定済みトピックに寄せようとしない)。
-12. **(第十一輯で追加・重要)`data/index.js` に新しいデータファイルを
+11. **新しいPDFの内容が、前回の引き継ぎで想定していた次章と異なる場合が
+    ある(表紙の号数表記と実際の内容が一致しないこともある、今回のPDFの
+    表紙は「第十一・十二輯」だったが内容は前回想定通り「眼の相」だった)。**
+    実際に受領したPDFの目次・見出しを必ず確認し、想定と異なっていたら
+    素直にその内容に沿って作業すること。
+12. **(重要・繰り返し注意)`data/index.js` に新しいデータファイルを
     登録する際は、`tools/generate-index.js` の `DATA_FILES` 配列だけでなく
-    `app/index.html` の `<script>` タグも必ず追加すること。** 過去数
-    セッションにわたって `app/index.html` へのスクリプトタグ追加が漏れ
-    続けており、今回発覚した時点で6ファイル・79項目が実際のブラウザ実行時
-    に読み込まれない状態になっていた(今回修正済み)。
+    `app/index.html` の `<script>` タグも必ず追加すること。** 過去
+    セッションで `app/index.html` へのスクリプトタグ追加漏れが繰り返し
+    発生していたため(第十一輯で発覚・修正済み)、今回は追加後に
+    `grep -n "script src" app/index.html` で全ファイル分そろっているか
+    必ず目視確認すること。
+13. **(今回追加)性的な内容や病名の診断的示唆に触れる話題ほど、
+    「そのような俗称・俗信が存在した」という形に一般化して抽出すると
+    データとして残しやすい。** 完全除外一辺倒にせず、`tone: "caution"`
+    や注記文で読者に配慮しつつ、鑑定アプリとしての面白さも損なわない
+    バランスを今後も意識する(桃花眼・蛇眼などの俗称紹介がその一例)。
 
 ## 除外方針(恒久・累積。`source/notes.md`にも記載済み)
 
@@ -249,23 +276,25 @@ ninso-repo/
 
 1. 性的な写真品評企画、身体的特徴と生殖器官・体毛・性機能を結びつける
    俗信(例: 不感症・不妊症・インポテンツとの相関、体毛の生え方と月経・
-   生理現象の対応、性病罹患リスクの示唆)
+   生理現象の対応、性病罹患リスクの示唆、まぶたの折れ方と愛人関係の
+   結びつけ)
 2. 民族・人種・身分階層を骨相・体格と結びつけて性格や優劣を比較する記述
    (差別的ステレオタイプを含むもの)。形態上の一般概念(長頭・円頭、
-   寒冷地・温暖地適応等)だけを、特定の集団や身分に結びつけない形で
-   抽出するのは可
+   寒冷地・温暖地適応、蒙古ひだの形状等)だけを、特定の集団や身分に
+   結びつけない形で抽出するのは可
 3. 精神疾患・自殺を身体的特徴と安易に結びつけるスティグマ的な記述
    (例: 指の歪みと発狂・自殺の相関、悩みを苦にした自殺の実例エピソード)
 4. 特定の病名を診断的に示唆する記述(例: 爪の型が直接「脳溢血型」
    「心臓病型」等の病名になっているもの、人中の血色から子宮癌の兆候・
-   眼球の色から胃や腎臓の病気を読み取るとする記述)。一般化した体質・
-   体力・健康状態の表現に置き換えるのは可
+   眼球の色から胃や腎臓の病気、出眼と甲状腺疾患を診断的に読み取るとする
+   記述)。一般化した体質・体力・健康状態の表現に置き換えるのは可
 5. 診断データそのものではない付随コンテンツ(読者質問コーナー、
    商品広告、寄生虫等の医学豆知識、参考書籍紹介、法医学トリビアや
-   作家・有名人・皇室関係者・実名俳優/女優/経済人にまつわる余談
-   エピソード、美容外科・歴史トリビア、実名を用いた具体的な個人の
-   実例エピソード、社会時評・人口論・宗教史・気象学トリビア等の
-   雑学的コンテンツ)は単純に対象外(除外理由の記録も不要)
+   作家・有名人・皇室関係者・実名俳優/女優/経済人/政治家/歴史上の人物に
+   まつわる余談エピソード、美容外科・歴史トリビア、実名を用いた具体的な
+   個人の実例エピソード、社会時評・人口論・宗教史・気象学トリビア・
+   ナショナリズム的言辞等の雑学的コンテンツ)は単純に対象外
+   (除外理由の記録も不要)
 6. 人相・骨相を性風俗業(遊女・男娼など)の顧客分類や営業ノウハウ
    として解説する記述は、診断データ化せず、存在した事実のみを
    記録する。単純な風俗史的言及(例:特定の職業で眉を剃る習慣が
@@ -275,22 +304,22 @@ ninso-repo/
    戒める注記つきで採用、のいずれかを都度判断する(第七輯の
    `nose_profile_curve_types` では③、第八輯の
    `nose_profile_western_classification` では②を採用した)。
-8. 犯罪学(ロンブローゾ流)のように、身体的特徴(顎の形状、歯並び等)を
-   犯罪傾向と直接結びつける記述に遭遇した場合は、方針3(精神疾患・自殺の
-   スティグマ化)に準じて慎重に扱う。統計や学説の存在は記録するが、
-   身体的特徴と犯罪傾向を直接結びつける具体的な記述は採用しない、という
-   運用で第十一輯(歯の相・女囚の歯並び統計)に対応した。今後もこの運用を
+8. 犯罪学(ロンブローゾ流)のように、身体的特徴(顎の形状、歯並び、
+   眼の形状等)を犯罪傾向と直接結びつける記述に遭遇した場合は、方針3
+   (精神疾患・自殺のスティグマ化)に準じて慎重に扱う。統計や学説の
+   存在は記録するが、身体的特徴と犯罪傾向を直接結びつける具体的な
+   記述は採用しない、という運用で第十一輯(歯の相・女囚の歯並び統計)や
+   今回(眼の相・四方白眼/車輪眼と犯罪傾向)に対応した。今後もこの運用を
    継続する。
 
 ## 未着手で残っている非性的な章
 
 - **頬・顎の相(人相学詳論(十四)(十五))** → 新規 `data/cheek_jaw.js` 案。
   頬の胃穴・消化能力、顎の骨格三質論、二重顎、犯罪学的顎型論(要除外判断)
-  など。★前々回から持ち越し、優先度高め
-- **目の相(次回PDFの可能性が高い)** → 新規 `data/eyes.js` 案。原本に
-  「次回はいよいよ画龍点睛の、眼の相法に入る」旨の記載あり。
+  など。★数回前から持ち越し、優先度高め
 - **顔・体質・五行・輪郭・身体の基礎データ全般**(`core.js` 等5ファイル
-  が空)→ 優先度高め
+  が空)→ 優先度高め。眼・気色は今回の `eyes.js` でかなりカバーしたが、
+  `core.js` 自体はまだ未実装。
 - 十字面法の残り型(王字面・目字面・用字面など) → `data/face_shape.js`
 - 身体総論の続き(臍・腰・臀・足・後ろ姿など) → `data/body.js`
 - 咽喉・首の高さ、顔面角度(カンペール角) → 新規 `data/head_neck.js` 案
@@ -301,15 +330,15 @@ ninso-repo/
   検討するか判断
 - 掌線と年齢目盛りの精密な図解(今回は概念のみ採用、精密な座標は未採用)
 - 鼻の横顔40分類カタログの個別詳細化(今回は代表5分類に集約収録のみ)
-- 目・気色(`core.js`が空のため丸ごと未着手)
+- 瞳孔十二相秘伝の逐条の精密な図解・座標(今回は概要のみ採用)
 
 ## 今回やってほしいこと
 
-1. 新しいPDF資料(または今回持ち越した頬・顎、あるいは目の相)を読み込んで、
-   同じスキーマ(key/name/category/role/options[{id,label,tone,text}])で
-   データ化
+1. 新しいPDF資料(または今回持ち越した頬・顎、あるいは `core.js` 等の
+   基礎データ)を読み込んで、同じスキーマ(key/name/category/role/
+   options[{id,label,tone,text}])でデータ化
 2. 新しいkeyは上記の「key一覧」と重複しないように付ける
-3. 上記の未着手章、特に頬・顎、目、及び空のままの `core.js` 等5ファイルが
+3. 上記の未着手章、特に頬・顎、及び空のままの `core.js` 等5ファイルが
    あれば優先的にカバー(ただし着手前にユーザーに確認してもよい)
 4. 採用/除外の判断は `source/notes.md` に追記する形で記録
    (除外方針は上記の累積リストに沿う。新しいパターンの除外が
@@ -320,7 +349,9 @@ ninso-repo/
    可能であれば `node -e "require('./data/index.js')"` 等で
    重複keyやエラーがないか検証する
 7. **`app/index.html` の `<script>` タグも忘れずに追加する**
-   (第十一輯で判明したバグの再発防止)
+   (過去複数回発覚したバグの再発防止。追加後に
+   `grep -n "script src" app/index.html` で全ファイル分そろっているか
+   必ず確認する)
 8. UIには着手しない(データ拡充を優先)
 9. 作業が終わったら、**リポジトリ全体を1つのzip**にしてdownload
    できるようにし(差分zipではなく丸ごと)、この形式の継続プロンプト

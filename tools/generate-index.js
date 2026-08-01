@@ -39,6 +39,7 @@ const DATA_FILES = [
   'teeth.js',
   'ear.js',
   'cheekbone.js',
+  'eyes.js',
 ];
 
 function loadParts(filename) {

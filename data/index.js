@@ -66,7 +66,8 @@
       safeRequire('./mouth.js'),
       safeRequire('./teeth.js'),
       safeRequire('./ear.js'),
-      safeRequire('./cheekbone.js')
+      safeRequire('./cheekbone.js'),
+      safeRequire('./eyes.js')
     );
   } else {
     root.PARTS = factory(
@@ -89,7 +90,8 @@
       root.MOUTH,
       root.TEETH,
       root.EAR,
-      root.CHEEKBONE
+      root.CHEEKBONE,
+      root.EYES
     );
   }
 }(typeof self !== 'undefined' ? self : this, function (
@@ -112,7 +114,8 @@
   mouth,
   teeth,
   ear,
-  cheekbone
+  cheekbone,
+  eyes
 ) {
   function arr(x) {
     return Array.isArray(x) ? x : [];
@@ -138,6 +141,7 @@
     arr(mouth),
     arr(teeth),
     arr(ear),
-    arr(cheekbone)
+    arr(cheekbone),
+    arr(eyes)
   );
 }));

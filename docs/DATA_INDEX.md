@@ -1,4 +1,4 @@
-<!-- 合計 174 項目 / 生成日時: 2026-07-31T10:56:49.593Z -->
+<!-- 合計 213 項目 / 生成日時: 2026-08-01T03:22:52.777Z -->
 
 # データ一覧(自動生成)
 
@@ -262,3 +262,47 @@
 | `cheekbone_mole_life_stage_omens` | 観骨のホクロ位置と年代別の伝統的な暗示 | 顔 | 観骨 | 3 |
 | `cheekbone_beard_growth_fortune` | 観骨まわりのヒゲの生え方と中年以降の運勢の伝統的な見方 | 顔 | 観骨 | 1 |
 | `cheekbone_low_prominence_personality` | 観骨が目立たない人の性格の伝統的な見方 | 顔 | 観骨 | 1 |
+
+## eyes.js (39項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `eye_importance_overview` | 人相学における眼の重要性(三つの観点) | 顔 | 眼 | 1 |
+| `eye_light_dominant_weight` | 眼光を重視する伝統的な比重の考え方 | 顔 | 眼 | 1 |
+| `eye_anatomical_parts_names` | 眼の各部位の名称(瞳孔・晴・胎・魚尾など) | 顔 | 眼 | 1 |
+| `eye_age_related_changes_table` | 幼年・中年・老年による眼の変化(伝統的な対照表) | 顔 | 眼 | 2 |
+| `eye_pupil_light_response` | 瞳孔の明暗反応とカメラの絞りの比喩 | 顔 | 眼 | 1 |
+| `eye_three_qualities_correspondence` | 瞳・晴・胎に表れる三質論(心性質・筋骨質・営養質) | 顔 | 眼 | 3 |
+| `eye_shape_terminology_types` | 眼の形にまつわる基本用語一覧 | 顔 | 眼 | 2 |
+| `eye_size_personality_large` | 大きい眼の人の性格傾向 | 顔 | 眼 | 2 |
+| `eye_size_personality_small` | 小さい眼の人の性格傾向 | 顔 | 眼 | 2 |
+| `eye_protrusion_type` | 出眼(凸眼)の性格・体質傾向 | 顔 | 眼 | 2 |
+| `eye_sunken_type` | 凹眼(くぼんだ眼)の性格傾向 | 顔 | 眼 | 1 |
+| `tianzhai_eyelid_area_meaning` | 田宅(眉と眼の間)の意味 | 顔 | 眼 | 1 |
+| `tianzhai_width_fortune` | 田宅の広さと出世運・相続運 | 顔 | 眼 | 2 |
+| `tianzhai_texture_reading` | 田宅の肉づきによる性格・成功パターンの違い | 顔 | 眼 | 2 |
+| `eye_mole_position_folk_belief` | 目の下(涙堂・臥蚕)のホクロにまつわる俗信 | 顔 | 眼 | 1 |
+| `eye_asymmetry_left_right_reading` | 左右の眼の大きさの違いによる性格傾向 | 顔 | 眼 | 2 |
+| `eye_asymmetry_inheritance_folk_belief` | 眼の大小の違いにまつわる隔世遺伝の俗信 | 顔 | 眼 | 1 |
+| `elephant_eye_type` | 象眼(細く長い眼)の性格傾向 | 顔 | 眼 | 1 |
+| `eye_tilt_up_down_type` | 上り眼・下り眼の性格傾向 | 顔 | 眼 | 2 |
+| `eye_corner_shape_reading` | 眼尻・目頭の形状(四尾の相)による性格 | 顔 | 眼 | 2 |
+| `eyelid_heaviness_type` | まぶたの肉づき(重めのまぶた)による性格 | 顔 | 眼 | 1 |
+| `sanbaku_upper_variant_types` | 上三白の細分類による性格傾向 | 顔 | 眼 | 2 |
+| `four_white_eye_caution_reading` | 四方白眼(四白眼)にまつわる伝統的な注意 | 顔 | 眼 | 1 |
+| `gyobi_sen_crows_feet_presence` | 魚尾筋(笑いじわ)の有無による性格傾向 | 顔 | 眼 | 2 |
+| `gyobi_sen_count_folk_belief` | 魚尾筋の本数にまつわる俗信 | 顔 | 眼 | 1 |
+| `peach_blossom_eye_folk_term` | 「桃花眼」という俗称の一般的な意味 | 顔 | 眼 | 1 |
+| `snake_eye_folk_type` | 蛇眼(疑い深い印象の目)の俗称 | 顔 | 眼 | 1 |
+| `double_eyelid_personality` | 二重まぶたの性格傾向 | 顔 | 眼 | 1 |
+| `single_eyelid_personality` | 一重まぶたの性格傾向 | 顔 | 眼 | 1 |
+| `epicanthic_fold_description` | 目頭のひだ(蒙古ひだ)の形態的な説明 | 顔 | 眼 | 1 |
+| `red_vein_pupil_omens_collection` | 瞳孔にかかる赤脈(充血の筋)にまつわる俗信集 | 顔 | 眼 | 2 |
+| `eye_color_pupil_meaning` | 瞳(黒目)の色による性格傾向 | 顔 | 眼 | 2 |
+| `eye_color_climate_theory` | 眼の色と気候適応論(一般化した紹介) | 顔 | 眼 | 1 |
+| `sangan_rokushin_method_intro` | 三眼六神の法(天眼・人眼・地眼)の概念 | 顔 | 眼 | 1 |
+| `tai_shirome_color_reading` | 胎(白目)の色つやによる体調・運勢の読み方(一般化) | 顔 | 眼 | 2 |
+| `pupil_twelve_palace_method_intro` | 瞳孔十二相(瞳孔十二宮)秘伝の概要 | 顔 | 眼 | 2 |
+| `daruma_eye_method_seven_conditions` | 達磨相眼法・七条(眼の吉凶を見る七つの基準) | 顔 | 眼 | 2 |
+| `pupil_size_willpower_reading` | 瞳孔の大小と意志力の強さの俗信 | 顔 | 眼 | 2 |
+| `pupil_size_region_folk_theory` | 瞳孔の大小と地域・気候にまつわる俗信 | 顔 | 眼 | 1 |
