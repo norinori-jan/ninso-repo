@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" class="face-map">
+  <!--
+    顔タップ式マップの簡易参照図(土台案)。
+    `人相記入用.docx` の手書き記入用テンプレート(顔の輪郭イラスト)を
+    参考にしたレイアウトの土台であり、実際の意匠(輪郭の丸み等)は概略。
+    そのまま印刷・本番デザインに使うのではなく、座標調整の出発点として
+    扱ってください。
+
+    palm-zones.svg と異なり、1ゾーンに複数〜数十項目が対応するため、
+    data-key ではなく data-role のみを付与している。
+    app.js側では document.querySelectorAll('[data-role]') にクリック
+    イベントをバインドし、
+      PARTS.filter(p => p.category === '顔' && p.role === zone.dataset.role)
+    で一覧を取得して展開表示する想定(選択肢を選んだらカルテに追加、
+    という流れは docs/KARTE_DESIGN.md 参照)。
+  -->
+
+  <!-- 顔の輪郭(卵型の簡易近似) -->
+  <path d="M200,20 C300,20 340,120 340,240 C340,380 280,480 200,500
+           C120,480 60,380 60,240 C60,120 100,20 200,20 Z"
+        fill="var(--face-fill, #fdf6ec)" stroke="var(--face-stroke, #7a5c3e)" stroke-width="2"/>
+
+  <!-- 髪(毛髪データroleと連動させたい場合の参考ゾーン。額の生え際を軽く示す程度) -->
+  <path data-role="毛髪"
+        d="M70,140 C70,70 120,25 200,20 C280,25 330,70 330,140
+           C300,90 250,55 200,55 C150,55 100,90 70,140 Z"
+        class="zone" fill="var(--hair-fill, #e8ded0)"/>
+
+  <!-- 額(骨相学の額関連ロールとも連動しうる領域) -->
+  <rect data-role="額" x="110" y="55" width="180" height="80" rx="18" class="zone"/>
+
+  <!-- 眉(左右) -->
+  <path data-role="眉" d="M120,150 Q150,138 180,148 L178,158 Q150,150 122,160 Z" class="zone"/>
+  <path data-role="眉" d="M280,150 Q250,138 220,148 L222,158 Q250,150 278,160 Z" class="zone"/>
+
+  <!-- 眼(左右) -->
+  <ellipse data-role="眼" cx="150" cy="190" rx="32" ry="16" class="zone"/>
+  <ellipse data-role="眼" cx="250" cy="190" rx="32" ry="16" class="zone"/>
+
+  <!-- 観骨(頬骨。眼の外側下あたり) -->
+  <circle data-role="観骨" cx="115" cy="230" r="26" class="zone"/>
+  <circle data-role="観骨" cx="285" cy="230" r="26" class="zone"/>
+
+  <!-- 鼻(中心の縦長領域) -->
+  <path data-role="鼻" d="M200,175 C190,220 178,260 178,285
+           C178,300 190,310 200,310 C210,310 222,300 222,285
+           C222,260 210,220 200,175 Z" class="zone"/>
+
+  <!-- 法令(鼻翼から口の脇に伸びる線の領域) -->
+  <path data-role="法令" d="M178,290 C160,320 150,350 148,375" class="zone-line"
+        fill="none" stroke="var(--face-stroke, #7a5c3e)" stroke-width="3"/>
+  <path data-role="法令" d="M222,290 C240,320 250,350 252,375" class="zone-line"
+        fill="none" stroke="var(--face-stroke, #7a5c3e)" stroke-width="3"/>
+
+  <!-- 人中(鼻の下〜上唇まで) -->
+  <rect data-role="人中" x="190" y="308" width="20" height="26" rx="6" class="zone"/>
+
+  <!-- 口・歯(口全体をひとつのゾーンにし、タップ後に role=口/歯を両方選べるようにする想定) -->
+  <ellipse data-role="口" cx="200" cy="355" rx="42" ry="16" class="zone"/>
+
+  <!-- 顎(頬・顎データは今後追加予定。先行してゾーンだけ用意) -->
+  <path data-role="頬・顎" d="M140,400 C150,450 175,485 200,500
+           C225,485 250,450 260,400" class="zone"
+        fill="none" stroke="var(--face-stroke, #7a5c3e)" stroke-width="2"/>
+
+  <!-- 耳(左右) -->
+  <ellipse data-role="耳" cx="66" cy="210" rx="18" ry="34" class="zone"/>
+  <ellipse data-role="耳" cx="334" cy="210" rx="18" ry="34" class="zone"/>
+
+  <!-- ラベル(視認用。実装ではCSSでフォントサイズ等を調整) -->
+  <g class="zone-labels" font-size="12" fill="var(--face-label, #4a3826)" text-anchor="middle">
+    <text x="200" y="95">額</text>
+    <text x="150" y="145">眉</text>
+    <text x="250" y="145">眉</text>
+    <text x="150" y="215">眼</text>
+    <text x="250" y="215">眼</text>
+    <text x="115" y="235">観骨</text>
+    <text x="285" y="235">観骨</text>
+    <text x="200" y="250">鼻</text>
+    <text x="140" y="345">法令</text>
+    <text x="260" y="345">法令</text>
+    <text x="200" y="325">人中</text>
+    <text x="200" y="360">口・歯</text>
+    <text x="200" y="470">頬・顎</text>
+    <text x="66" y="215">耳</text>
+    <text x="334" y="215">耳</text>
+  </g>
+</svg>

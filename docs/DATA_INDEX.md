@@ -1,4 +1,4 @@
-<!-- 合計 213 項目 / 生成日時: 2026-08-01T03:22:52.777Z -->
+<!-- 合計 262 項目 / 生成日時: 2026-08-01T12:38:28.623Z -->
 
 # データ一覧(自動生成)
 
@@ -263,7 +263,7 @@
 | `cheekbone_beard_growth_fortune` | 観骨まわりのヒゲの生え方と中年以降の運勢の伝統的な見方 | 顔 | 観骨 | 1 |
 | `cheekbone_low_prominence_personality` | 観骨が目立たない人の性格の伝統的な見方 | 顔 | 観骨 | 1 |
 
-## eyes.js (39項目)
+## eyes.js (55項目)
 
 | key | name | category | role | options数 |
 |---|---|---|---|---|
@@ -306,3 +306,67 @@
 | `daruma_eye_method_seven_conditions` | 達磨相眼法・七条(眼の吉凶を見る七つの基準) | 顔 | 眼 | 2 |
 | `pupil_size_willpower_reading` | 瞳孔の大小と意志力の強さの俗信 | 顔 | 眼 | 2 |
 | `pupil_size_region_folk_theory` | 瞳孔の大小と地域・気候にまつわる俗信 | 顔 | 眼 | 1 |
+| `eyelid_zone_division_method` | まぶたを三つの区画に分けて観る伝統的な方法 | 顔 | 眼 | 1 |
+| `eyelid_middle_zone_rise_restrained_type` | 上まぶた中央がふくらんで見える人の性格傾向 | 顔 | 眼 | 1 |
+| `eyelid_middle_zone_sag_sophisticated_type` | 上まぶた中央が垂れている人の性格傾向(老成型) | 顔 | 眼 | 1 |
+| `eyelid_middle_zone_sag_artistic_type` | 上まぶたが下に大きく垂れている人の性格傾向(芸術型) | 顔 | 眼 | 1 |
+| `eyelid_middle_zone_flat_realistic_type` | 上まぶた中央が垂れていない人の性格傾向(現実主義型) | 顔 | 眼 | 1 |
+| `eyelid_lower_business_vitality_type` | 下まぶたがふくらんでいる人の性格傾向(意欲・自信型) | 顔 | 眼 | 1 |
+| `tear_duct_swelling_rise_type` | 涙堂・臥蚕がふくらんで見える人の家庭運の傾向 | 顔 | 眼 | 1 |
+| `tear_duct_flat_lonely_type` | 涙堂・臥蚕が乏しく見える人の家庭運の傾向 | 顔 | 眼 | 1 |
+| `hidden_virtue_skin_color_belief` | 目の下の皮膚の色つやと「陰徳」にまつわる俗信 | 顔 | 眼 | 2 |
+| `lower_eyelid_craftsman_technical_type` | 下まぶたが張っている人の性格傾向(技術者型) | 顔 | 眼 | 1 |
+| `eyelash_density_reading` | まつ毛の多さ・少なさにまつわる性格・金銭傾向の俗信 | 顔 | 眼 | 2 |
+| `eye_twelve_palace_mapping_method` | 眼球の周囲に十二宮を対応させる伝統的な観法の概要 | 顔 | 眼 | 1 |
+| `red_vein_palace_position_collection` | 眼に現れる赤い血管(赤脈)の位置と意味づけの伝統的分類 | 顔 | 眼 | 2 |
+| `eye_vigor_life_stage_reading` | 「眼光」の盛衰と人生の浮き沈みにまつわる伝統的な見方 | 顔 | 眼 | 2 |
+| `five_buddhist_eyes_concept` | 仏教における「五眼」の考え方(肉眼・天眼・慧眼・法眼・仏眼) | 顔 | 眼 | 2 |
+| `eye_folk_one_line_readings_collection` | 眼の形にまつわる一行占(短い言い伝え)の集成 | 顔 | 眼 | 3 |
+
+## gait.js (13項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `gait_reflects_personality_overview` | 歩き方が人柄を映すという伝統的な考え方 | 行動 | 挙動 | 1 |
+| `gait_speed_energy_reading` | 歩く速さにまつわる性格傾向 | 行動 | 挙動 | 2 |
+| `gait_stride_weight_balance_reading` | 歩幅・足の運びの重心にまつわる性格傾向 | 行動 | 挙動 | 2 |
+| `gait_posture_slouch_reading` | 猫背・前かがみで歩く人の性格傾向 | 行動 | 挙動 | 1 |
+| `gait_animal_metaphor_collection` | 歩き方を動物にたとえる伝統的な分類 | 行動 | 挙動 | 2 |
+| `gait_toe_heel_pressure_reading` | 爪先・かかとへの重心のかけ方にまつわる性格傾向 | 行動 | 挙動 | 2 |
+| `gait_looking_around_reading` | 歩きながらきょろきょろする癖にまつわる性格傾向 | 行動 | 挙動 | 1 |
+| `gait_head_direction_reading` | うつむき・仰向いて歩く癖にまつわる性格傾向 | 行動 | 挙動 | 2 |
+| `gait_mimicry_self_improvement_belief` | 良い歩き方を意識して真似ることで精神を養うという考え方 | 行動 | 挙動 | 1 |
+| `gait_cane_carrying_reading` | 杖を立てるように歩く人の性格傾向 | 行動 | 挙動 | 1 |
+| `gait_calm_confident_pace_reading` | 急がず騒がず一定の調子で歩く人の性格傾向 | 行動 | 挙動 | 1 |
+| `gait_inward_outward_toe_historical_pattern` | 内輪・外輪(つま先の向き)にまつわる歴史的な言い伝え | 行動 | 挙動 | 1 |
+| `gait_habitual_correction_effort` | 癖のある歩き方を改める努力にまつわる伝統的な戒め | 行動 | 挙動 | 1 |
+
+## eating.js (9項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `eating_speed_reading` | 食べる速さにまつわる性格傾向 | 行動 | 食事 | 2 |
+| `eating_amount_body_type_correlation` | 体型と食事量の組み合わせにまつわる性格傾向 | 行動 | 食事 | 2 |
+| `overeating_fortune_reading` | 暴飲暴食と身代・家計にまつわる伝統的な見方 | 行動 | 食事 | 1 |
+| `eating_manner_elegance_reading` | 食べ方の品位・行儀にまつわる性格傾向 | 行動 | 食事 | 2 |
+| `eating_culture_duration_comparison` | 食事にかける時間の文化的な違いにまつわる伝統的な見方 | 行動 | 食事 | 1 |
+| `picky_eating_reading` | 好き嫌いの多さにまつわる性格傾向 | 行動 | 食事 | 2 |
+| `eating_age_appetite_change_reading` | 年齢による食欲の変化にまつわる伝統的な見方 | 行動 | 食事 | 1 |
+| `poverty_wealth_eating_manner_reading` | 富貴・貧困の相と食事の仕方の結びつきにまつわる伝統的な見方 | 行動 | 食事 | 2 |
+| `eating_habit_fixed_routine_reading` | 食事の量や時間が一定かどうかにまつわる伝統的な見方 | 行動 | 食事 | 2 |
+
+## voice.js (11項目)
+
+| key | name | category | role | options数 |
+|---|---|---|---|---|
+| `voice_importance_overview` | 人相学における声・音声の重要性 | 行動 | 声 | 1 |
+| `voice_age_gender_typical_tone` | 年齢・性別による声の典型的な違い | 行動 | 声 | 2 |
+| `voice_resonance_bell_metaphor` | 声の余韻を鐘の音にたとえる伝統的な聞き方 | 行動 | 声 | 1 |
+| `voice_strength_clarity_reading` | 声の太さ・力強さ・明瞭さにまつわる性格傾向 | 行動 | 声 | 2 |
+| `voice_speed_talkativeness_reading` | 話す速さ・話し方の癖にまつわる性格傾向 | 行動 | 声 | 2 |
+| `voice_five_elements_type_overview` | 声を五つの型に分類する伝統的な考え方(木火土金水) | 行動 | 声 | 1 |
+| `voice_stutter_hesitation_reading` | どもり・つっかえながら話す癖にまつわる伝統的な見方 | 行動 | 声 | 1 |
+| `voice_emotional_pitch_change_reading` | 怒った時・喜んだ時に変化する声の調子にまつわる観察 | 行動 | 声 | 1 |
+| `crying_laughing_voice_reading` | 泣き声・笑い声にまつわる性格傾向 | 行動 | 声 | 2 |
+| `voice_volume_reading` | 声の大小にまつわる性格傾向 | 行動 | 声 | 2 |
+| `voice_trailing_pitch_direction_reading` | 語尾が上がる・下がる話し方にまつわる性格傾向 | 行動 | 声 | 2 |
