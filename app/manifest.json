@@ -1,0 +1,26 @@
+{
+  "name": "人相占い・鑑定カルテ",
+  "short_name": "人相占い",
+  "description": "人相学・手相学の伝統的な文献データベースと、実際の鑑定記録(カルテ)をオフラインで扱えるPWAです。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf6ec",
+  "theme_color": "#3f2f1e",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

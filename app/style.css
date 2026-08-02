@@ -1,0 +1,284 @@
+/* app/style.css
+ * 人相占い・鑑定カルテPWA スタイル。
+ * SVG側(palm-zones.svg / face-zones.svg)と同じCSS変数を共有する。
+ */
+
+:root {
+  --bg: #fdf6ec;
+  --ink: #3f2f1e;
+  --accent: #7a5c3e;
+  --accent-soft: rgba(122, 92, 62, 0.12);
+  --card-bg: #ffffff;
+  --border: #e3d5c0;
+  --tone-positive: #3b6e4a;
+  --tone-caution: #a1472f;
+  --tone-neutral: #4a3826;
+
+  --palm-fill: #f3e6d8;
+  --palm-stroke: #7a5c3e;
+  --palm-label: #4a3826;
+
+  --face-fill: #fdf6ec;
+  --face-stroke: #7a5c3e;
+  --face-label: #4a3826;
+  --hair-fill: #e8ded0;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  line-height: 1.7;
+}
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 16px 80px;
+}
+
+header.app-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 12px 0 8px;
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+
+header.app-header h1 {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+nav.tabs {
+  display: flex;
+  gap: 6px;
+}
+
+nav.tabs button {
+  flex: 1;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--ink);
+  border-radius: 8px 8px 0 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+nav.tabs button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+section.panel {
+  padding-top: 16px;
+}
+
+/* --- 選択UI(カテゴリ・ロール) --- */
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  font-weight: bold;
+}
+
+/* --- 図(SVG)エリア --- */
+
+.zone-map-wrap {
+  max-width: 320px;
+  margin: 0 auto 16px;
+}
+
+.zone-map-wrap svg {
+  width: 100%;
+  height: auto;
+}
+
+.zone-map-wrap .zone,
+.zone-map-wrap .zone-line {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 0.15s ease;
+}
+
+.zone-map-wrap .zone:hover,
+.zone-map-wrap .zone:focus,
+.zone-map-wrap .zone.selected {
+  fill: rgba(122, 92, 62, 0.35);
+  outline: none;
+}
+
+/* --- カード類 --- */
+
+.item-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.item-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.option-row {
+  border-top: 1px dashed var(--border);
+  padding: 8px 0;
+}
+
+.option-row:first-of-type { border-top: none; }
+
+.option-label {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.tone-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+  color: #fff;
+}
+
+.tone-positive { background: var(--tone-positive); }
+.tone-caution  { background: var(--tone-caution); }
+.tone-neutral  { background: var(--tone-neutral); }
+
+.option-text {
+  margin: 6px 0 8px;
+  font-size: 0.92rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+.btn.danger {
+  background: transparent;
+  border-color: var(--tone-caution);
+  color: var(--tone-caution);
+}
+
+/* --- カルテ --- */
+
+.karte-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: var(--card-bg);
+  cursor: pointer;
+}
+
+.karte-entry {
+  border-left: 3px solid var(--accent);
+  padding: 4px 10px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.karte-entry time {
+  color: #8a7860;
+  font-size: 0.75rem;
+  display: block;
+}
+
+textarea, input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+textarea { min-height: 70px; resize: vertical; }
+
+label.field-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #6b5842;
+  margin: 10px 0 4px;
+}
+
+.notice {
+  font-size: 0.78rem;
+  color: #8a7860;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+}
+
+.result-block {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 14px;
+}
+
+.result-block h4 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.result-block dl {
+  margin: 0;
+}
+
+.result-block dt {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.result-block dd {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+}
