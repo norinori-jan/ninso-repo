@@ -4,6 +4,7 @@
   "description": "人相・手相占いPWA(オフライン動作)",
   "private": true,
   "scripts": {
-    "index": "node tools/generate-index.js"
+    "index": "node tools/generate-index.js",
+    "test": "node tests/hidden-face-detector.test.js"
   }
 }
