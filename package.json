@@ -5,6 +5,6 @@
   "private": true,
   "scripts": {
     "index": "node tools/generate-index.js",
-    "test": "node tests/hidden-face-detector.test.js"
+    "test": "node tests/hidden-face-detector.test.js && node tests/autonomous-face-reader.test.js"
   }
 }

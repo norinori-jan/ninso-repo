@@ -103,7 +103,7 @@
     dict: { category: '顔', role: null, highlightKey: null },
     karte: { currentId: null },
     kartes: loadKartes(),
-    hidden: { mode: 'manual' }, // 'manual' | 'mark' | 'detect'
+    hidden: { mode: 'manual' }, // 'manual' | 'mark' | 'json' | 'detect' | 'auto'
   };
 
   var root = null; // #app 要素
@@ -374,6 +374,10 @@
 
   function engine() {
     return (typeof window !== 'undefined' && window.HiddenFaceEngine) || null;
+  }
+
+  function autoReader() {
+    return (typeof window !== 'undefined' && window.AutonomousFaceReader) || null;
   }
 
   function renderHiddenManualForm() {
@@ -809,6 +813,110 @@
     out.innerHTML = html;
   }
 
+  // ---------------------------------------------------------------------
+  // 全体解析(自律・選択操作なし)フォーム
+  //
+  // ユーザー要望への対応: 「目」「口」等をプルダウンで選択させず、画像を
+  // アップロードするだけで自動的に解釈する。パーツ単位の選択は行わない。
+  // ただし正直な注意として、実際の表情筋の動き・視線方向そのものを検出
+  // しているわけではなく、画像全体の明暗・色彩・左右対称性・起伏という
+  // 大づかみな特徴からの解釈である旨を、フォーム上の注意書きと結果の
+  // どちらにも明記する(`app/autonomous-face-reader.js`参照)。
+  // ---------------------------------------------------------------------
+
+  function renderAutonomousForm() {
+    var html = '';
+    html += '<div class="notice">画像をアップロードするだけで、目・口・眉などのパーツ選択は行わずに自動で解釈します(実験的)。画面全体の明暗・色彩・左右対称性・コントラスト(起伏)という大づかみな特徴から、伝統的な相学・色彩心理の発想で言語化するもので、実際の表情筋の動きや視線方向そのものを検出しているわけではありません。実在の人物の心理状態を診断・断定するものではなく、あくまで娯楽的な解釈です。</div>';
+
+    html += '<input type="file" accept="image/*" id="af-image-input">';
+    html += '<div id="af-image-wrap" style="margin-top:10px;max-width:100%;">';
+    html += '<img id="af-image" style="max-width:100%;display:block;" alt="">';
+    html += '</div>';
+    html += '<p id="af-status" style="font-size:0.8rem;color:#6b5842;">画像を選択すると、自動的に全体を解析します(選択操作は不要です)。</p>';
+    html += '<div id="af-result"></div>';
+    return html;
+  }
+
+  function renderAutonomousReport(container, report) {
+    if (!container) return;
+    var html = '';
+    html += '<div class="result-block"><h4>画像全体の特徴(自動計算)</h4><dl>';
+    html += '<dt>明るさ</dt><dd>' + escapeHTML(report.summary.brightness) + '</dd>';
+    html += '<dt>色味</dt><dd>' + escapeHTML(report.summary.color) + '</dd>';
+    html += '<dt>彩度</dt><dd>' + escapeHTML(report.summary.saturation) + '</dd>';
+    html += '<dt>左右差(対称性)</dt><dd>' + escapeHTML(report.summary.asymmetry) + '</dd>';
+    html += '<dt>起伏(コントラスト)</dt><dd>' + escapeHTML(report.summary.tension) + '</dd>';
+    html += '</dl></div>';
+
+    html += '<div class="result-block"><h4>詳細解釈</h4><dl>';
+    html += '<dt>明るさの意味</dt><dd>' + escapeHTML(report.detail.brightness) + '</dd>';
+    html += '<dt>色味の意味</dt><dd>' + escapeHTML(report.detail.color) + '</dd>';
+    html += '<dt>彩度の意味</dt><dd>' + escapeHTML(report.detail.saturation) + '</dd>';
+    html += '<dt>光の当たり方の意味</dt><dd>' + escapeHTML(report.detail.light) + '</dd>';
+    html += '<dt>左右差の意味</dt><dd>' + escapeHTML(report.detail.asymmetry) + '</dd>';
+    html += '<dt>起伏の意味</dt><dd>' + escapeHTML(report.detail.tension) + '</dd>';
+    html += '</dl></div>';
+
+    html += '<div class="result-block"><h4>総合診断メッセージ</h4><p>' + escapeHTML(report.message) + '</p></div>';
+    container.innerHTML = html;
+  }
+
+  function initAutonomousAnalysis(panel) {
+    var fileInput = panel.querySelector('#af-image-input');
+    var img = panel.querySelector('#af-image');
+    var statusEl = panel.querySelector('#af-status');
+    var resultEl = panel.querySelector('#af-result');
+    if (!fileInput || !img) return;
+
+    fileInput.addEventListener('change', function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      resultEl.innerHTML = '';
+      statusEl.textContent = '画像を読み込んでいます…';
+
+      var fileReader = new FileReader();
+      fileReader.onload = function (e) {
+        img.onload = function () {
+          var readerMod = autoReader();
+          if (!readerMod) {
+            statusEl.textContent = '解析モジュールを読み込めませんでした。';
+            return;
+          }
+          statusEl.textContent = '解析中…';
+
+          // 処理負荷を抑えるため、長辺を最大200pxに縮小したオフスクリーン
+          // canvasに描画してからピクセルデータを取得する。
+          var naturalW = img.naturalWidth || 1;
+          var naturalH = img.naturalHeight || 1;
+          var maxDim = 200;
+          var scale = Math.min(1, maxDim / Math.max(naturalW, naturalH));
+          var w = Math.max(1, Math.round(naturalW * scale));
+          var h = Math.max(1, Math.round(naturalH * scale));
+
+          var offCanvas = document.createElement('canvas');
+          offCanvas.width = w;
+          offCanvas.height = h;
+          var ctx = offCanvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          var imageData;
+          try {
+            imageData = ctx.getImageData(0, 0, w, h);
+          } catch (err) {
+            statusEl.textContent = '画像の解析に失敗しました(' + escapeHTML(String(err)) + ')。';
+            return;
+          }
+
+          var report = readerMod.analyzeImageAutonomously(imageData);
+          statusEl.textContent = '解析が完了しました(選択操作は行っていません)。';
+          renderAutonomousReport(resultEl, report);
+        };
+        img.src = e.target.result;
+      };
+      fileReader.readAsDataURL(file);
+    });
+  }
+
   function renderAbstractJsonForm() {
     var sample = {
       detection_id: 'det-0001',
@@ -875,6 +983,7 @@
     var html = '';
     html += '<div class="chip-row">';
     html += '<button class="chip' + (state.hidden.mode === 'manual' ? ' active' : '') + '" data-hidden-mode="manual">手動で診断</button>';
+    html += '<button class="chip' + (state.hidden.mode === 'auto' ? ' active' : '') + '" data-hidden-mode="auto">全体解析(自律・選択操作なし)</button>';
     html += '<button class="chip' + (state.hidden.mode === 'mark' ? ' active' : '') + '" data-hidden-mode="mark">画像マーキング(実験的)</button>';
     html += '<button class="chip' + (state.hidden.mode === 'json' ? ' active' : '') + '" data-hidden-mode="json">抽象相JSON解析</button>';
     html += '<button class="chip' + (state.hidden.mode === 'detect' ? ' active' : '') + '" data-hidden-mode="detect">顔らしさ検出(意味づけなし)</button>';
@@ -882,6 +991,7 @@
     if (state.hidden.mode === 'mark') html += renderGansouMarkForm();
     else if (state.hidden.mode === 'json') html += renderAbstractJsonForm();
     else if (state.hidden.mode === 'detect') html += renderFaceLikelihoodForm();
+    else if (state.hidden.mode === 'auto') html += renderAutonomousForm();
     else html += renderHiddenManualForm();
     return html;
   }
@@ -925,6 +1035,9 @@
     } else if (state.tab === 'hidden' && state.hidden.mode === 'mark') {
       var panelEl = document.getElementById('panel');
       if (panelEl) initGansouMarking(panelEl);
+    } else if (state.tab === 'hidden' && state.hidden.mode === 'auto') {
+      var autoPanelEl = document.getElementById('panel');
+      if (autoPanelEl) initAutonomousAnalysis(autoPanelEl);
     }
   }
 
