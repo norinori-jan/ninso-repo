@@ -3,6 +3,28 @@
 人相学・手相学の伝統的な文献をデータ化し、オフラインで動作する
 簡易鑑定PWA(Progressive Web App)として提供するプロジェクトです。
 
+## ローカルでの動作確認方法
+
+`app/index.html` を**ダブルクリックして直接開く(file://で開く)と、
+うまく動かないことがあります**(SVGマップの読み込み・Service Worker
+登録・localStorage利用などがブラウザのセキュリティ制限で失敗するため)。
+必ず簡易ローカルサーバー経由で開いてください:
+
+```powershell
+cd C:\Users\norin\ninso-repo
+npm run serve
+```
+
+ターミナルに表示される `http://localhost:8080/app/index.html` をブラウザ
+(Chrome/Edge等)で開いてください。ポートが競合する場合は
+`$env:PORT=3000; npm run serve` のように環境変数で変更できます。
+(`npm run serve` は追加パッケージのインストール不要、Node標準機能のみの
+`tools/serve.js` を実行します)
+
+画面が真っ白になる・何も表示されない場合は、ブラウザの開発者ツール
+(F12 → Console タブ)に赤字のエラーが出ていないか確認し、内容を
+Claudeに伝えてください。
+
 ## 構成
 
 - `app/` — PWA本体(HTML/CSS/JS、アイコン、Service Worker)
