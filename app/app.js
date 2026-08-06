@@ -462,7 +462,7 @@
   function renderGansouMarkForm() {
     var eng = engine();
     var html = '';
-    html += '<div class="notice">画像をアップロードすると「自動検出する」ボタンで、暗い斑点(ほくろ等)のペア+その下の暗い線(しわ・口)の組み合わせを画像処理だけで(学習データ不要のアルゴリズムで)探します。候補から選ぶか、「目(左)→目(右)→口」の順に自分でタップして手動マーキングすることもできます。まだ実験的な機能で、精度には限界があります(docs/GANSOU_ROADMAP.md 参照)。ここで保存した記録は、将来のAIモデル学習用データの土台になります。</div>';
+    html += '<div class="notice">画像をアップロードすると「自動検出する」ボタンで、暗い斑点(ほくろ等)のペア+その下の暗い線(しわ・口)の組み合わせを画像処理だけで(学習データ不要のアルゴリズムで)、複数の解像度を横断して探します。候補から選ぶか、「目(左)→目(右)→口」の順に自分でタップして手動マーキングすることもできます。肌色マスキング(下のチェックボックス)は実在の顔写真向けの機能で、木目・岩肌・壁のシミ等、顔以外のパレイドリア現象を探す場合はオフにすると検出範囲が広がります。まだ実験的な機能で、精度には限界があります(docs/GANSOU_ROADMAP.md 参照)。ここで保存した記録は、将来のAIモデル学習用データの土台になります。</div>';
 
     html += '<input type="file" accept="image/*" id="gs-image-input">';
     html += '<div id="gs-image-wrap" style="position:relative;margin-top:10px;max-width:100%;">';
@@ -470,7 +470,8 @@
     html += '<canvas id="gs-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>';
     html += '</div>';
     html += '<p id="gs-status" style="font-size:0.8rem;color:#6b5842;">まず画像を選択してください。</p>';
-    html += '<button class="btn" id="gs-autodetect-btn" type="button">自動検出する(実験的・点+線のパターン探索)</button> ';
+    html += '<label style="display:block;font-size:0.8rem;margin:6px 0;"><input type="checkbox" id="gs-skinmask-toggle" checked> 肌色マスキングを使う(顔写真向け。木目・岩肌・壁のシミ等、顔以外のパレイドリア探索ではオフにすると検出範囲が広がります)</label>';
+    html += '<button class="btn" id="gs-autodetect-btn" type="button">自動検出する(実験的・点+線のパターン探索、複数解像度で探索)</button> ';
     html += '<button class="btn secondary" id="gs-reset-btn" type="button">マーキングをリセット</button>';
     html += '<div id="gs-auto-candidates"></div>';
 
@@ -625,6 +626,7 @@
 
     var autoDetectBtn = panel.querySelector('#gs-autodetect-btn');
     var autoCandidatesEl = panel.querySelector('#gs-auto-candidates');
+    var skinMaskToggle = panel.querySelector('#gs-skinmask-toggle');
     if (autoDetectBtn) autoDetectBtn.addEventListener('click', function () {
       if (!gansouMark.imgLoaded) {
         autoCandidatesEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に画像を選択してください。</p>';
@@ -636,13 +638,14 @@
         autoCandidatesEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">検出モジュールを読み込めませんでした。</p>';
         return;
       }
-      autoCandidatesEl.innerHTML = '<p style="font-size:0.8rem;color:#6b5842;">解析中…</p>';
+      autoCandidatesEl.innerHTML = '<p style="font-size:0.8rem;color:#6b5842;">解析中(複数解像度で探索しています)…</p>';
 
       // 解析用に縮小したオフスクリーンcanvasへ描画してImageDataを取得
-      // (処理負荷を抑えるため、長辺を最大240pxに縮小する)
+      // (マルチスケール探索の中で更に複数解像度へ縮小するため、ここでは
+      // 少し大きめの長辺360pxを上限にしておく)
       var naturalW = img.naturalWidth || canvas.width;
       var naturalH = img.naturalHeight || canvas.height;
-      var maxDim = 240;
+      var maxDim = 360;
       var scale = Math.min(1, maxDim / Math.max(naturalW, naturalH));
       var analysisW = Math.max(1, Math.round(naturalW * scale));
       var analysisH = Math.max(1, Math.round(naturalH * scale));
@@ -661,13 +664,16 @@
         return;
       }
 
-      var candidates = det.findFaceCandidates(imageData, {
+      var useSkinMask = !skinMaskToggle || skinMaskToggle.checked;
+      var candidates = det.findFaceCandidatesMultiScale(imageData, {
         maxCandidates: 5,
+        scales: [160, 240, 360],
+        skinMask: useSkinMask,
         scoreFn: eng ? eng.computeFaceLikenessScore : undefined,
       });
 
       if (!candidates.length) {
-        autoCandidatesEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">点+線の組み合わせパターンは見つかりませんでした。手動でマーキングしてください。</p>';
+        autoCandidatesEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">点+線の組み合わせパターンは見つかりませんでした。手動でマーキングするか、肌色マスキングのオン/オフを切り替えて再度お試しください。</p>';
         return;
       }
 
@@ -675,9 +681,9 @@
       var scaleX = canvas.width / analysisW;
       var scaleY = canvas.height / analysisH;
 
-      var html = '<p style="font-size:0.85rem;color:#6b5842;">候補が' + candidates.length + '件見つかりました(スコア順)。採用すると3点マーキングが自動入力されます。</p>';
+      var html = '<p style="font-size:0.85rem;color:#6b5842;">候補が' + candidates.length + '件見つかりました(スコア順、複数解像度を統合)。採用すると3点マーキングが自動入力されます。</p>';
       candidates.forEach(function (c, i) {
-        html += '<div class="option-row"><span class="option-label">候補' + (i + 1) + '(スコア ' + c.score + ')</span> ' +
+        html += '<div class="option-row"><span class="option-label">候補' + (i + 1) + '(スコア ' + c.score + (c.scale ? '・解像度' + c.scale + 'px' : '') + ')</span> ' +
           '<button class="btn secondary gs-adopt-btn" type="button" data-candidate-index="' + i + '">採用する</button></div>';
       });
       autoCandidatesEl.innerHTML = html;

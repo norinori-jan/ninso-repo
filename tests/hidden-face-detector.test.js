@@ -132,4 +132,79 @@ var stats = Det.meanStd(blurred);
 check('meanStdが妥当な値を返す', stats.mean > 0 && stats.std >= 0);
 
 console.log('\n合計: ' + pass + ' 成功 / ' + fail + ' 失敗');
+
+// ===========================================================================
+// 可能性拡張版: 局所標準偏差・マルチスケール探索・肌色マスキングOFFのテスト
+// ===========================================================================
+
+// --- Test 6: 局所標準偏差が「明暗のコントラストが場所によって違う画像」で
+// それぞれの領域に応じた値になること(左半分は平坦、右半分は起伏あり)
+var w6 = 100, h6 = 100;
+var img6 = { data: new Uint8ClampedArray(w6 * h6 * 4), width: w6, height: h6 };
+var seed6 = 7;
+function rand6() { seed6 = (seed6 * 1103515245 + 12345) & 0x7fffffff; return seed6 / 0x7fffffff; }
+for (var y6 = 0; y6 < h6; y6++) {
+  for (var x6 = 0; x6 < w6; x6++) {
+    var idx6 = (y6 * w6 + x6) * 4;
+    var v6 = x6 < w6 / 2 ? 128 : Math.round(80 + rand6() * 140); // 左:平坦 右:起伏大
+    img6.data[idx6] = v6; img6.data[idx6 + 1] = v6; img6.data[idx6 + 2] = v6; img6.data[idx6 + 3] = 255;
+  }
+}
+var ctx6 = Det.buildContext(img6, { skinMask: false });
+var stdFlat = Det.localStd(ctx6.integral, ctx6.integralSq, w6, h6, 20, 50, 10, ctx6.stdFloor);
+var stdNoisy = Det.localStd(ctx6.integral, ctx6.integralSq, w6, h6, 80, 50, 10, ctx6.stdFloor);
+check('平坦な領域の局所標準偏差は下限(stdFloor)に近い', Math.abs(stdFlat - ctx6.stdFloor) < 1);
+check('起伏のある領域の局所標準偏差は平坦な領域より大きい', stdNoisy > stdFlat);
+
+// --- Test 7: resizeImageDataBoxAverage が正しい寸法・平均色になること
+var w7 = 40, h7 = 20;
+var img7 = { data: new Uint8ClampedArray(w7 * h7 * 4), width: w7, height: h7 };
+for (var p7 = 0; p7 < w7 * h7; p7++) {
+  var idx7 = p7 * 4;
+  img7.data[idx7] = 100; img7.data[idx7 + 1] = 150; img7.data[idx7 + 2] = 200; img7.data[idx7 + 3] = 255;
+}
+var resized7 = Det.resizeImageDataBoxAverage(img7, 20);
+check('縮小後の幅が長辺基準で正しい', resized7.width === 20);
+check('縮小後の高さがアスペクト比を保っている', resized7.height === 10);
+check('均一な色の画像は縮小してもほぼ同じ色になる', Math.abs(resized7.data[0] - 100) <= 1 && Math.abs(resized7.data[1] - 150) <= 1);
+var resizedNoop = Det.resizeImageDataBoxAverage(img7, 1000);
+check('拡大が必要なmaxDimでは等倍のまま返す', resizedNoop.width === w7 && resizedNoop.height === h7);
+
+// --- Test 8: findFaceCandidatesMultiScale が単一スケール探索と同様に
+// 点+線パターンを検出でき、座標が元画像の座標系になっていること
+var w8 = 200, h8 = 200;
+var img8 = { data: new Uint8ClampedArray(w8 * h8 * 4), width: w8, height: h8 };
+for (var p8 = 0; p8 < w8 * h8; p8++) {
+  var idx8 = p8 * 4;
+  img8.data[idx8] = 200; img8.data[idx8 + 1] = 170; img8.data[idx8 + 2] = 150; img8.data[idx8 + 3] = 255;
+}
+drawDot(img8, 70, 80, 6, 30);
+drawDot(img8, 130, 80, 6, 30);
+drawHLine(img8, 85, 115, 120, 40);
+var multiCandidates = Det.findFaceCandidatesMultiScale(img8, { maxCandidates: 5, scales: [100, 200] });
+check('マルチスケール探索でも点+線パターンが検出できる', multiCandidates.length > 0);
+if (multiCandidates.length) {
+  check('マルチスケール探索の座標が元画像スケールに変換されている(目の間隔が概ね60px)',
+    Math.abs((multiCandidates[0].points.eyeRight.x - multiCandidates[0].points.eyeLeft.x) - 60) < 25);
+}
+
+// --- Test 9: skinMask:false を指定すると、肌色でない画像(木目・岩肌等を
+// 想定した非肌色の一様な背景)でも点+線パターンが検出できること
+// (肌色マスキングは実写真向けの機能で、一般的なパレイドリア探索では
+// 無効化できることの確認)
+var w9 = 120, h9 = 120;
+var img9 = { data: new Uint8ClampedArray(w9 * h9 * 4), width: w9, height: h9 };
+for (var p9 = 0; p9 < w9 * h9; p9++) {
+  var idx9 = p9 * 4;
+  // 木目調の茶色っぽいが肌色判定には入らない色味を想定
+  img9.data[idx9] = 90; img9.data[idx9 + 1] = 60; img9.data[idx9 + 2] = 30; img9.data[idx9 + 3] = 255;
+}
+drawDot(img9, 40, 50, 4, 15);
+drawDot(img9, 80, 50, 4, 15);
+drawHLine(img9, 50, 70, 75, 18);
+var skinRegion9 = Det.computeSkinRegion(img9);
+var noSkinMaskCandidates = Det.findFaceCandidates(img9, { maxCandidates: 5, skinMask: false });
+check('非肌色画像でもskinMask:falseで点+線パターンが検出できる', noSkinMaskCandidates.length > 0);
+
+console.log('\n合計(拡張分含む): ' + pass + ' 成功 / ' + fail + ' 失敗');
 process.exit(fail > 0 ? 1 : 0);

@@ -20,7 +20,7 @@
  *     options.scoreFn として注入。未指定の場合は簡易フォールバックで
  *     単独動作もできるようにしてある)。
  *
- * 今回(精度向上版)で追加した前処理(docs/GANSOU_ROADMAP.md記載の
+ * 精度向上版(1回目)で追加した前処理(docs/GANSOU_ROADMAP.md記載の
  * 「精度向上のための具体的な次の一手」1〜4番をすべて実装):
  *   1. 局所適応閾値: 画像全体の平均ではなく、各画素の近傍(積分画像で
  *      高速計算)の明度を基準に閾値を決める。照明ムラへの耐性が上がる。
@@ -30,12 +30,41 @@
  *      場合は自動的に画像全体にフォールバックする(検出範囲を誤って
  *      ゼロにしないため。単純なYCbCr判定は肌の色みの違いで外れやすい
  *      という限界があるため、このフォールバックは精度面・公平性の両面で
- *      重要)。
+ *      重要)。**なお、肌色マスキングは実在の顔写真向けの機能であり、
+ *      木目・岩肌・壁のシミ等の一般的なパレイドリア探索では逆に検出範囲を
+ *      狭めてしまうため、`options.skinMask = false`で無効化できる
+ *      (下記「可能性拡張版」も参照)。
  *   3. 平滑化: 閾値判定の前に軽いボックスブラーをかけ、ノイズ由来の
  *      小さな誤検出を減らす。
  *   4. 候補の形状フィルタ: 点候補は外接矩形に対する充填率(丸み・塊らしさ)
  *      とアスペクト比で、毛髪のような細長い塊を除外する。線候補は隣接行に
  *      同程度の暗い連なりがあるか(線としての連続性)を優先する。
+ *
+ * 可能性拡張版(2回目)で追加した機能(「顔の写真など、様々な写真から
+ * 隠れた顔を見つけられる可能性を高めてほしい」という要望への対応):
+ *   5. **真の局所適応閾値(局所標準偏差)**: 従来は閾値の「中心」
+ *      (局所平均)だけが局所適応で、「どれだけ暗ければ暗いとみなすか」の
+ *      基準(標準偏差)は画像全体で1つの値を使っていた。今回、標準偏差も
+ *      積分画像(2乗和の積分画像)で局所計算するように変更し、Niblack/
+ *      Sauvola系の二値化に近い、真にローカルな適応的閾値処理にした。
+ *      これにより、写真の中で明暗のコントラストが場所によって大きく
+ *      異なる場合(例: 一部は平坦でくっきり、一部は複雑な木目や岩肌)でも、
+ *      それぞれの領域に合った基準で暗い点・線を検出でき、検出できる
+ *      パターンの幅が広がる(平坦な領域で標準偏差が0に近づいて過検出に
+ *      ならないよう、画像全体の標準偏差の一定割合を下限として設けている)。
+ *   6. **肌色マスキングの明示的なON/OFF**: 上記の通り、実在の顔写真以外
+ *      (木目・岩肌・壁のシミ・雲など、一般的なパレイドリア現象)を
+ *      探す用途では`skinMask:false`で無効化できるようにした
+ *      (UI側にもチェックボックスを追加、`app/app.js`参照)。
+ *   7. **マルチスケール探索(`findFaceCandidatesMultiScale`)**: 1つの
+ *      解像度だけで探索すると、パターンの絶対的な大きさによっては
+ *      見逃すことがある(例: 縮小しすぎると小さな点+線パターンが潰れる、
+ *      逆に大きすぎると処理が重くなる上ノイズに弱くなる)。純粋なJS実装の
+ *      ボックス平均法による縮小(`resizeImageDataBoxAverage`、Canvas
+ *      APIに依存しないためNode上でもテスト可能)で複数の解像度に縮小し、
+ *      それぞれで`findFaceCandidates`を実行、元画像の座標系に変換してから
+ *      重複を間引いて統合する。1つの解像度では見逃していたパターンを
+ *      別の解像度で拾える可能性が上がる。
  *
  * 精度についての正直な注意(docs/GANSOU_ROADMAP.md にも記載):
  *   - 上記の改善後も、あくまで古典的画像処理による近似であり、実際の
@@ -145,6 +174,39 @@
     return count > 0 ? (D - B - C + A) / count : 0;
   }
 
+  // 局所標準偏差のための積分画像(画素値の2乗の和)。localMean用の積分画像と
+  // 組み合わせ、E[x^2] - E[x]^2 の公式で局所分散(→標準偏差)を高速に求める。
+  function computeIntegralImageOfSquares(gray, width, height) {
+    var w1 = width + 1;
+    var integral = new Float64Array(w1 * (height + 1));
+    for (var y = 0; y < height; y++) {
+      var rowSum = 0;
+      for (var x = 0; x < width; x++) {
+        var v = gray[y * width + x];
+        rowSum += v * v;
+        integral[(y + 1) * w1 + (x + 1)] = integral[y * w1 + (x + 1)] + rowSum;
+      }
+    }
+    return integral;
+  }
+
+  // 局所標準偏差(Niblack/Sauvola系の適応的二値化と同じ発想)。
+  // minFloorを指定すると、画像が平坦でほぼノイズしかない領域で標準偏差が
+  // 0近くになり過検出を起こすのを防ぐための下限になる。
+  function localStd(integral, integralSq, width, height, x, y, radius, minFloor) {
+    var w1 = width + 1;
+    var x0 = Math.max(0, x - radius), x1 = Math.min(width - 1, x + radius);
+    var y0 = Math.max(0, y - radius), y1 = Math.min(height - 1, y + radius);
+    var count = (x1 - x0 + 1) * (y1 - y0 + 1);
+    if (count <= 0) return minFloor || 0;
+    var sum = integral[(y1 + 1) * w1 + (x1 + 1)] - integral[y0 * w1 + (x1 + 1)] - integral[(y1 + 1) * w1 + x0] + integral[y0 * w1 + x0];
+    var sumSq = integralSq[(y1 + 1) * w1 + (x1 + 1)] - integralSq[y0 * w1 + (x1 + 1)] - integralSq[(y1 + 1) * w1 + x0] + integralSq[y0 * w1 + x0];
+    var mean = sum / count;
+    var variance = Math.max(0, sumSq / count - mean * mean);
+    var std = Math.sqrt(variance);
+    return minFloor ? Math.max(std, minFloor) : std;
+  }
+
   // -----------------------------------------------------------------
   // 肌色マスキング: YCbCr色空間の経験的な範囲判定(Chai & Ngan方式に近い
   // 簡易版)で肌色らしい画素を判定し、外接矩形+余白を検索範囲とする。
@@ -218,6 +280,11 @@
     var blurred = boxBlur(gray, width, height, blurRadius);
     var stats = meanStd(blurred);
     var integral = computeIntegralImage(blurred, width, height);
+    var integralSq = computeIntegralImageOfSquares(blurred, width, height);
+    // 局所標準偏差の下限(平坦な領域での過検出防止)。画像全体の標準偏差の
+    // 一定割合を最低ラインとする。
+    var stdFloorRatio = typeof options.stdFloorRatio === 'number' ? options.stdFloorRatio : 0.3;
+    var stdFloor = stats.std * stdFloorRatio;
     var useSkinMask = options.skinMask !== false; // 既定でON
     var skinRegion = useSkinMask
       ? computeSkinRegion(imageData, options.skin)
@@ -225,6 +292,7 @@
     return {
       width: width, height: height,
       gray: gray, blurred: blurred, stats: stats, integral: integral,
+      integralSq: integralSq, stdFloor: stdFloor,
       skinRegion: skinRegion,
     };
   }
@@ -264,7 +332,8 @@
       for (var x = region.x1; x <= region.x2; x++) {
         var idx = y * width + x;
         if (visited[idx]) continue;
-        var localThresh = localMean(ctx.integral, width, height, x, y, adaptiveRadius) - k * ctx.stats.std;
+        var localThresh = localMean(ctx.integral, width, height, x, y, adaptiveRadius) -
+          k * localStd(ctx.integral, ctx.integralSq, width, height, x, y, adaptiveRadius, ctx.stdFloor);
         if (blurred[idx] >= localThresh) { visited[idx] = 1; continue; }
 
         // 4近傍のスタックベース探索で連結成分(暗い塊)を1つ取り出す。
@@ -284,7 +353,8 @@
             if (nx < region.x1 || ny < region.y1 || nx > region.x2 || ny > region.y2) continue;
             var nidx = ny * width + nx;
             if (visited[nidx]) continue;
-            var neighborThresh = localMean(ctx.integral, width, height, nx, ny, adaptiveRadius) - k * ctx.stats.std;
+            var neighborThresh = localMean(ctx.integral, width, height, nx, ny, adaptiveRadius) -
+              k * localStd(ctx.integral, ctx.integralSq, width, height, nx, ny, adaptiveRadius, ctx.stdFloor);
             if (blurred[nidx] >= neighborThresh) { visited[nidx] = 1; continue; }
             visited[nidx] = 1;
             stack.push(nidx);
@@ -376,7 +446,8 @@
       ? options.adaptiveRadius
       : Math.max(4, Math.round(Math.min(width, height) * 0.08));
     var threshFn = function (x, y) {
-      return localMean(ctx.integral, width, height, x, y, adaptiveRadius) - k * ctx.stats.std;
+      return localMean(ctx.integral, width, height, x, y, adaptiveRadius) -
+        k * localStd(ctx.integral, ctx.integralSq, width, height, x, y, adaptiveRadius, ctx.stdFloor);
     };
 
     var clipped = intersectRegion(
@@ -527,18 +598,135 @@
     return deduped.slice(0, maxCandidates);
   }
 
+  // -----------------------------------------------------------------
+  // マルチスケール探索: Canvas APIに依存しない純粋なJS実装のボックス平均法
+  // による縮小で複数解像度のImageData相当オブジェクトを作り、それぞれで
+  // findFaceCandidates()を実行してから元画像の座標系に統合する。
+  // 1つの解像度だけでは(縮小しすぎて潰れる/大きすぎてノイズに弱くなる等)
+  // 見逃していたパターンを、別の解像度で拾える可能性を上げるための機能。
+  // -----------------------------------------------------------------
+
+  function resizeImageDataBoxAverage(imageData, maxDim) {
+    var srcW = imageData.width, srcH = imageData.height;
+    var scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+    var dstW = Math.max(1, Math.round(srcW * scale));
+    var dstH = Math.max(1, Math.round(srcH * scale));
+    if (dstW >= srcW && dstH >= srcH) return imageData; // 拡大はしない(等倍でそのまま返す)
+
+    var srcData = imageData.data;
+    var dstData = new Uint8ClampedArray(dstW * dstH * 4);
+    for (var dy = 0; dy < dstH; dy++) {
+      var sy0 = Math.floor(dy * srcH / dstH);
+      var sy1 = Math.max(sy0 + 1, Math.floor((dy + 1) * srcH / dstH));
+      for (var dx = 0; dx < dstW; dx++) {
+        var sx0 = Math.floor(dx * srcW / dstW);
+        var sx1 = Math.max(sx0 + 1, Math.floor((dx + 1) * srcW / dstW));
+        var rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        for (var sy = sy0; sy < sy1 && sy < srcH; sy++) {
+          for (var sx = sx0; sx < sx1 && sx < srcW; sx++) {
+            var sidx = (sy * srcW + sx) * 4;
+            rSum += srcData[sidx]; gSum += srcData[sidx + 1]; bSum += srcData[sidx + 2]; aSum += srcData[sidx + 3];
+            count++;
+          }
+        }
+        var didx = (dy * dstW + dx) * 4;
+        if (count > 0) {
+          dstData[didx] = rSum / count;
+          dstData[didx + 1] = gSum / count;
+          dstData[didx + 2] = bSum / count;
+          dstData[didx + 3] = aSum / count;
+        }
+      }
+    }
+    return { data: dstData, width: dstW, height: dstH };
+  }
+
+  function shallowMerge(base, extra) {
+    var out = {};
+    var k;
+    if (base) for (k in base) if (base.hasOwnProperty(k)) out[k] = base[k];
+    if (extra) for (k in extra) if (extra.hasOwnProperty(k)) out[k] = extra[k];
+    return out;
+  }
+
+  function findFaceCandidatesMultiScale(imageData, options) {
+    options = options || {};
+    var scales = options.scales || [160, 240, 320];
+    var maxCandidates = options.maxCandidates || 5;
+    var width = imageData.width, height = imageData.height;
+
+    var allCandidates = [];
+    var doneDims = {};
+
+    scales.forEach(function (maxDim) {
+      var scaled = resizeImageDataBoxAverage(imageData, maxDim);
+      // 同じ解像度に丸められた場合は重複実行しない(小さい画像に対して
+      // 320px指定などをしても等倍のままなら1回だけ解析すればよい)。
+      var dimKey = scaled.width + 'x' + scaled.height;
+      if (doneDims[dimKey]) return;
+      doneDims[dimKey] = true;
+      if (scaled.width < 20 || scaled.height < 20) return; // 小さすぎる場合はスキップ
+
+      var scaleBackX = width / scaled.width;
+      var scaleBackY = height / scaled.height;
+      var perScaleOptions = shallowMerge(options, { maxCandidates: maxCandidates * 2 });
+      var found = findFaceCandidates(scaled, perScaleOptions);
+
+      found.forEach(function (c) {
+        var mapped = {
+          points: {
+            eyeLeft: { x: c.points.eyeLeft.x * scaleBackX, y: c.points.eyeLeft.y * scaleBackY },
+            eyeRight: { x: c.points.eyeRight.x * scaleBackX, y: c.points.eyeRight.y * scaleBackY },
+            mouth: { x: c.points.mouth.x * scaleBackX, y: c.points.mouth.y * scaleBackY },
+          },
+          score: c.score,
+          scale: maxDim,
+        };
+        if (c.regionCoords) {
+          mapped.regionCoords = {
+            x: Math.round(c.regionCoords.x * scaleBackX),
+            y: Math.round(c.regionCoords.y * scaleBackY),
+            w: Math.round(c.regionCoords.w * scaleBackX),
+            h: Math.round(c.regionCoords.h * scaleBackY),
+          };
+        }
+        allCandidates.push(mapped);
+      });
+    });
+
+    allCandidates.sort(function (a, b) { return b.score - a.score; });
+
+    // 解像度をまたいで見つかった、ほぼ同じ位置の候補を間引く
+    var deduped = [];
+    var tolX = width * 0.05, tolY = height * 0.05;
+    allCandidates.forEach(function (c) {
+      var overlaps = deduped.some(function (d) {
+        return Math.abs(d.points.eyeLeft.x - c.points.eyeLeft.x) < tolX &&
+          Math.abs(d.points.eyeRight.x - c.points.eyeRight.x) < tolX &&
+          Math.abs(d.points.eyeLeft.y - c.points.eyeLeft.y) < tolY;
+      });
+      if (!overlaps) deduped.push(c);
+    });
+
+    return deduped.slice(0, maxCandidates);
+  }
+
   return {
     toGrayscale: toGrayscale,
     meanStd: meanStd,
     boxBlur: boxBlur,
     computeIntegralImage: computeIntegralImage,
+    computeIntegralImageOfSquares: computeIntegralImageOfSquares,
     localMean: localMean,
+    localStd: localStd,
     isSkinPixel: isSkinPixel,
     computeSkinRegion: computeSkinRegion,
     buildContext: buildContext,
     detectDarkBlobs: detectDarkBlobs,
     detectDarkRunInRegion: detectDarkRunInRegion,
     findFaceCandidates: findFaceCandidates,
+    resizeImageDataBoxAverage: resizeImageDataBoxAverage,
+    findFaceCandidatesMultiScale: findFaceCandidatesMultiScale,
     fallbackScore: fallbackScore,
   };
 });
