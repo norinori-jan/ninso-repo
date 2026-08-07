@@ -6,6 +6,6 @@
   "scripts": {
     "index": "node tools/generate-index.js",
     "serve": "node tools/serve.js",
-    "test": "node tests/hidden-face-detector.test.js && node tests/autonomous-face-reader.test.js"
+    "test": "node tests/hidden-face-detector.test.js && node tests/autonomous-face-reader.test.js && node tests/hidden-face-engine.test.js"
   }
 }

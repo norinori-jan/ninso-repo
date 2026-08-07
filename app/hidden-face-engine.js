@@ -272,11 +272,56 @@
     return '輪郭が淡く、あくまで参考程度のパターンです。';
   }
 
+  // -----------------------------------------------------------------
+  // geometry(x, y, width, height) → canvas描画用の丸印指示
+  //
+  // 半径は既定20px(呼び出し側で上書き可能)。geometryが欠けている・
+  // x/yが数値でない場合は「描画できない」ことを明示した指示を返す。
+  // -----------------------------------------------------------------
+  var DEFAULT_MARK_RADIUS = 20;
+
+  function buildDrawInstruction(geometry, radius) {
+    var r = typeof radius === 'number' ? radius : DEFAULT_MARK_RADIUS;
+    var hasGeometry = !!geometry && typeof geometry.x === 'number' && typeof geometry.y === 'number';
+
+    if (!hasGeometry) {
+      return {
+        available: false,
+        radius: r,
+        x: null,
+        y: null,
+        width: (geometry && typeof geometry.width === 'number') ? geometry.width : null,
+        height: (geometry && typeof geometry.height === 'number') ? geometry.height : null,
+        message: '座標が不足しているため描画できません(geometry.x / geometry.y が必要です)。',
+        code: null,
+      };
+    }
+
+    var code = 'ctx.beginPath();\n' +
+      'ctx.arc(' + geometry.x + ', ' + geometry.y + ', ' + r + ', 0, Math.PI * 2);\n' +
+      'ctx.strokeStyle = "red";\n' +
+      'ctx.lineWidth = 3;\n' +
+      'ctx.stroke();';
+
+    return {
+      available: true,
+      radius: r,
+      x: geometry.x,
+      y: geometry.y,
+      width: typeof geometry.width === 'number' ? geometry.width : null,
+      height: typeof geometry.height === 'number' ? geometry.height : null,
+      message: '(' + geometry.x + ', ' + geometry.y + ') を中心に半径' + r + 'pxの赤い円を描画します。',
+      code: code,
+    };
+  }
+
   function buildAbstractGansouReport(input) {
     input = input || {};
     var feature = input.detected_feature || {};
     var comps = feature.abstract_components || {};
     var areaAttr = input.area_attribute || {};
+    var geometry = input.geometry || null;
+    var drawInstruction = buildDrawInstruction(geometry, input.markRadius);
 
     var locationLabel = labelOrRaw(LOCATION_LABELS, feature.location) || '(未指定)';
     var directionKey = feature.facing_direction || '';
@@ -325,6 +370,7 @@
 
     return {
       detectionId: input.detection_id || null,
+      drawInstruction: drawInstruction,
       location: locationLabel,
       palaceName: resolvedPalaceName || '(未分類)',
       domainCategory: areaAttr.domain_category || null,
@@ -355,5 +401,7 @@
     COMPONENT_LABELS: COMPONENT_LABELS,
     FACING_DIRECTION_LABELS: FACING_DIRECTION_LABELS,
     buildAbstractGansouReport: buildAbstractGansouReport,
+    buildDrawInstruction: buildDrawInstruction,
+    DEFAULT_MARK_RADIUS: DEFAULT_MARK_RADIUS,
   };
 });

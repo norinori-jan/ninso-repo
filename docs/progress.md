@@ -982,3 +982,45 @@
 - 引き続き、前回持ち越しの「全体解析(自律・選択操作なし)」モードの
   実写真検証、および`npm run serve`が実際にユーザー環境で機能したかの
   確認も残っている。
+
+## (今回) 抽象相JSON解析: 描画指示(丸印)を最優先タスクとして追加
+
+- ユーザーから、`buildAbstractGansouReport()`(抽象相JSON解析)の出力順を
+  「(1)画像描画指示(丸印)→(2)相学ロジックの解釈→(3)総合診断メッセージ」の
+  順に変更し、`geometry.x`/`geometry.y`を中心とした赤い円のcanvas描画指示
+  (半径20px、後で調整可能)を最優先で返すよう要望があった。
+- `app/hidden-face-engine.js`に`buildDrawInstruction(geometry, radius)`を
+  新規追加。`geometry.x`/`geometry.y`が数値でない・`geometry`自体が無い
+  場合は`available: false`とし、「座標が不足しているため描画できません」と
+  明示するメッセージを返す(コードは`null`)。値がある場合は
+  `ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ...`形式の
+  canvasコード文字列を生成する。半径は既定20pxだが、入力JSONの
+  `markRadius`で上書き可能にした。
+- `buildAbstractGansouReport()`の戻り値に`drawInstruction`フィールドを
+  追加(`available`/`x`/`y`/`width`/`height`/`radius`/`message`/`code`)。
+  相学解釈ロジック(十二宮・向き・鮮明度)自体は変更なし。
+- `app/app.js`の`runAbstractJsonDiagnosis()`のHTML出力順を「1. 画像描画
+  指示(丸印)→2. JSON解釈(相学ロジック)→3. 総合診断メッセージ」に変更。
+  描画不可の場合は赤字でその旨を表示。サンプルJSON
+  (`renderAbstractJsonForm()`)にも`geometry: {x, y, width, height}`の例を
+  追加し、案内文も新しい出力順・geometry欠落時の挙動に合わせて更新。
+- 新規テストファイル`tests/hidden-face-engine.test.js`を追加(20件)。
+  geometryあり/なし/不正な型/半径上書き、および従来の相学ロジック
+  (右頬→夫妻宮、outward→外向き、鮮明度分類、免責文言)を確認。
+  `package.json`の`test`スクリプトに追加し、`npm test`で
+  検出層(19件)・全体解析(12件)・本エンジン(20件)、合計51件すべて
+  成功を確認済み。
+- `app/index.html`の`<script src="hidden-face-engine.js">`は元々登録済み
+  のため、今回スクリプトタグの追加漏れは無し(`grep -n "script src"`で確認)。
+
+## 今回持ち越し・今後の課題
+
+- 描画指示のcanvasコードは文字列として生成しているのみで、実際に
+  ユーザーがアップロードした画像の上に丸印を重ねて表示するUI連携
+  (画像 + canvasオーバーレイ)はまだ実装していない。「抽象相JSON解析」
+  タブは現状テキスト出力のみなので、次回以降、画像プレビュー上に
+  実際に円を描画する機能と統合するかどうかを検討する。
+- `geometry.width`/`geometry.height`は現状データとして保持するのみで、
+  円の大きさや検出領域の矩形表示には使っていない(半径は常に20px固定
+  または`markRadius`指定値)。検出領域のサイズに応じて自動的に半径を
+  変える案も次回検討候補。

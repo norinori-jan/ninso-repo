@@ -942,9 +942,15 @@
         palace_name: '夫妻宮',
         domain_category: 'romance',
       },
+      geometry: {
+        x: 120,
+        y: 96,
+        width: 24,
+        height: 24,
+      },
     };
     var html = '';
-    html += '<div class="notice">画像解析AI+人間選別(Human-in-the-Loop)で確定された検出データ(JSON)を貼り付けると、十二宮の考え方に沿って解釈します。外部の検出システムの出力や、このアプリの「画像マーキング」タブでの検出結果を、この形式に整えて渡すことを想定した機能です。</div>';
+    html += '<div class="notice">画像解析AI+人間選別(Human-in-the-Loop)で確定された検出データ(JSON)を貼り付けると、(1)丸印の描画指示、(2)十二宮の考え方に沿った解釈、(3)娯楽的な総合診断、の順に出力します。外部の検出システムの出力や、このアプリの「画像マーキング」タブでの検出結果を、この形式に整えて渡すことを想定した機能です。`geometry`(x, y, width, height)が無い場合は、描画指示の代わりにその旨を明示します。</div>';
     html += '<label class="field-label">検出データ(JSON)</label>';
     html += '<textarea id="aj-input" style="min-height:220px;font-family:monospace;font-size:0.8rem;">' + escapeHTML(JSON.stringify(sample, null, 2)) + '</textarea>';
     html += '<button class="btn" id="aj-run-btn" style="margin-top:10px;">このJSONを解析する</button>';
@@ -965,23 +971,34 @@
       return;
     }
     var report = eng.buildAbstractGansouReport(parsed);
+    var draw = report.drawInstruction;
     var html = '';
-    html += '<div class="result-block"><dl>';
+
+    // 1. 画像描画指示(丸印)— 最優先タスクとして最初に表示
+    html += '<div class="result-block"><h4>1. 画像描画指示(丸印)</h4>';
+    if (draw && draw.available) {
+      html += '<p>' + escapeHTML(draw.message) + '</p>';
+      html += '<pre style="white-space:pre-wrap;font-size:0.8rem;background:#f4f0e8;padding:8px;border-radius:6px;">' + escapeHTML(draw.code) + '</pre>';
+    } else {
+      html += '<p style="color:#a1472f;">' + escapeHTML((draw && draw.message) || '座標が不足しているため描画できません。') + '</p>';
+    }
+    html += '</div>';
+
+    // 2. JSON解釈(相学ロジック)
+    html += '<div class="result-block"><h4>2. JSON解釈(相学ロジック)</h4><dl>';
     html += '<dt>検出ID</dt><dd>' + escapeHTML(report.detectionId || '(なし)') + '</dd>';
     html += '<dt>検出部位</dt><dd>' + escapeHTML(report.location) + '</dd>';
     html += '<dt>相学的位置(宮)</dt><dd>' + escapeHTML(report.palaceName) + (report.domainCategory ? '(領域: ' + escapeHTML(report.domainCategory) + ')' : '') + '</dd>';
     html += '<dt>向き</dt><dd>' + escapeHTML(report.direction) + '</dd>';
     html += '<dt>鮮明度スコア</dt><dd>' + report.clarityScore + '</dd>';
     html += '<dt>抽象パーツの構成</dt><dd>' + escapeHTML(report.featureDescription) + '</dd>';
+    html += '<dt>宮の意味(詳細解釈)</dt><dd>' + escapeHTML(report.detail.palaceMeaning) + '</dd>';
+    html += '<dt>向きの意味(詳細解釈)</dt><dd>' + escapeHTML(report.detail.orientationMeaning) + '</dd>';
+    html += '<dt>鮮明度の意味(詳細解釈)</dt><dd>' + escapeHTML(report.detail.clarityNote) + '</dd>';
     html += '</dl></div>';
 
-    html += '<div class="result-block"><h4>詳細解釈</h4><dl>';
-    html += '<dt>宮の意味</dt><dd>' + escapeHTML(report.detail.palaceMeaning) + '</dd>';
-    html += '<dt>向きの意味</dt><dd>' + escapeHTML(report.detail.orientationMeaning) + '</dd>';
-    html += '<dt>鮮明度の意味</dt><dd>' + escapeHTML(report.detail.clarityNote) + '</dd>';
-    html += '</dl></div>';
-
-    html += '<div class="result-block"><h4>総合診断メッセージ</h4><p>' + escapeHTML(report.message) + '</p></div>';
+    // 3. 総合診断メッセージ
+    html += '<div class="result-block"><h4>3. 総合診断メッセージ</h4><p>' + escapeHTML(report.message) + '</p></div>';
     out.innerHTML = html;
   }
 
