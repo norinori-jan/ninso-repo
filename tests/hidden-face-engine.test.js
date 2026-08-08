@@ -63,7 +63,7 @@ check('検出部位が右頬と解釈される', reportWithGeometry.location ===
 check('相学的位置が夫妻宮と解釈される', reportWithGeometry.palaceName === '夫妻宮');
 check('向きがoutward→外向きと解釈される', reportWithGeometry.direction === '外向き');
 check('鮮明度スコアがそのまま保持される', reportWithGeometry.clarityScore === 0.72);
-check('総合診断メッセージに免責文言が含まれる', reportWithGeometry.message.indexOf('あくまで伝統的な言い伝え') !== -1);
+check('総合診断メッセージに免責文言が含まれる', reportWithGeometry.message.indexOf('文献に基づく鑑定ではなく') !== -1);
 
 // --- Test 6: 入力が空でもクラッシュしない
 var emptyReport = Engine.buildAbstractGansouReport({});
