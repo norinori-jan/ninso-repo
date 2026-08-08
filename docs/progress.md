@@ -1058,3 +1058,17 @@
   「抽象相JSON解析」タブの自由記述で人間が記録する運用を推奨する
   こととした。詳細は`docs/GANSOU_ROADMAP.md`の該当節を参照。
 - テスト4件追加(`splitObviousRealFace`)、`npm test`全件成功確認済み。
+
+## 2026-08 探索範囲の「狭さ」対応(実写真での検証結果を受けて)
+
+- ユーザーが実際の顔写真で試した結果、「自動検出する」が依然として
+  実物大の目・口を優先的に見つけてしまう、生え際・輪郭まで範囲が
+  広がっていない、との指摘。
+- `app/hidden-face-detector.js`の`findFaceCandidates()`に
+  `minEyeDistRatio`/`maxEyeDistRatio`、`computeSkinRegion()`に
+  `marginRatio`オプションを追加(既定値は下位互換のため変更せず)。
+- `app/app.js`の自動検出呼び出しで`minEyeDistRatio:0.01,
+  maxEyeDistRatio:0.12`(狭い間隔のみ)・`skin:{marginRatio:0.4}`
+  (髪・輪郭まで探索範囲拡大)を指定するよう変更。案内文も更新。
+- テスト4件追加、`npm test`全69件成功確認済み。数値は暫定であり、
+  実写真での継続検証が必要(詳細は`docs/GANSOU_ROADMAP.md`参照)。

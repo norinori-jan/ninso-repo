@@ -248,8 +248,9 @@
       return { x1: 0, y1: 0, x2: width - 1, y2: height - 1, used: false, ratio: ratio };
     }
 
-    var marginX = Math.round((maxX - minX) * 0.15) + 2;
-    var marginY = Math.round((maxY - minY) * 0.15) + 2;
+    var marginRatio = typeof options.marginRatio === 'number' ? options.marginRatio : 0.15;
+    var marginX = Math.round((maxX - minX) * marginRatio) + 2;
+    var marginY = Math.round((maxY - minY) * marginRatio) + 2;
     return {
       x1: Math.max(0, minX - marginX),
       y1: Math.max(0, minY - marginY),
@@ -535,6 +536,14 @@
     var scoreFn = typeof options.scoreFn === 'function' ? options.scoreFn : fallbackScore;
     var maxCandidates = options.maxCandidates || 5;
     var minScore = typeof options.minScore === 'number' ? options.minScore : 0;
+    // 「点」同士の間隔(将来的な目・対の候補)を画像幅に対する比率で
+    // 何倍まで許容するか。既定は顔全体サイズの目の間隔を想定した広い
+    // 範囲だが、ユーザー提示の実例(髪の生え際に小さくまとまった
+    // 2〜3点)のような、より小さく狭い範囲のパターンを狙う場合は
+    // `minEyeDistRatio`/`maxEyeDistRatio`を狭く指定すること
+    // (`app/app.js`の自動検出ボタンでは、狭い範囲を既定にしている)。
+    var minEyeDistRatio = typeof options.minEyeDistRatio === 'number' ? options.minEyeDistRatio : 0.03;
+    var maxEyeDistRatio = typeof options.maxEyeDistRatio === 'number' ? options.maxEyeDistRatio : 0.6;
 
     var candidates = [];
 
@@ -547,7 +556,7 @@
         var dy = Math.abs(a.y - b.y);
 
         // 目の間隔として妥当な範囲か(画像幅に対する比率で判定)
-        if (dx < width * 0.03 || dx > width * 0.6) continue;
+        if (dx < width * minEyeDistRatio || dx > width * maxEyeDistRatio) continue;
         // 左右の高さがある程度そろっているか(傾きすぎていないか)
         if (dy > dx * 0.6) continue;
 

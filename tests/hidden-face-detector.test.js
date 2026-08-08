@@ -227,5 +227,45 @@ var split12 = Det.splitObviousRealFace([cornerSmall1], imgSize);
 check('splitObviousRealFaceは候補が1件だけならobviousを立てずhiddenのみ返す(誤って唯一の候補を除外しない)',
   split12.obvious === null && split12.hidden.length === 1);
 
+// --- Test 14〜17: minEyeDistRatio / maxEyeDistRatio / skin.marginRatio ---
+// 「まだ広い範囲で目と口を探している。もっと狭い範囲で、髪の毛・輪郭まで
+// 広げて探すこと」というユーザー指摘への対応関数群のテスト。
+var w14 = 300, h14 = 300;
+var img14 = makeSkinCanvas(w14, h14, skinRGB, [200, 200, 200]);
+// 画像幅の約2.7%しか離れていない、ごく小さくまとまった2点+下線
+// (講座動画・ユーザーの手動マーキング例のような、狭い範囲のパターンを模す。
+// 点同士が連結してしまわないよう、間隔をあけて配置する)
+drawDot(img14, 148, 100, 2, 20);
+drawDot(img14, 156, 100, 2, 20);
+drawHLine(img14, 146, 158, 106, 25);
+
+var defaultResult14 = Det.findFaceCandidates(img14, { maxCandidates: 5 });
+check('既定の間隔範囲(3%〜60%)では、間隔2.7%程度の極小パターンは検出されない',
+  defaultResult14.every(function (c) { return Math.abs(c.points.eyeRight.x - c.points.eyeLeft.x) >= w14 * 0.03; }));
+
+var narrowResult14 = Det.findFaceCandidates(img14, { maxCandidates: 5, minEyeDistRatio: 0.01, maxEyeDistRatio: 0.12 });
+check('minEyeDistRatioを狭めると、間隔2.7%程度の極小パターンが検出できる',
+  narrowResult14.some(function (c) {
+    var dx = Math.abs(c.points.eyeRight.x - c.points.eyeLeft.x);
+    return dx >= 4 && dx <= 12;
+  }));
+
+// margin: 肌色領域の外接矩形の外側(左端付近)に小さな2点+下線パターンを
+// 置き、既定の余白(15%)では検出範囲外、余白を広げる(40%)と検出範囲内に
+// 入ることを確認する。
+var w15 = 300, h15 = 300;
+var img15 = makeSkinCanvas(w15, h15, skinRGB, [200, 200, 200]);
+drawDot(img15, 6, 150, 2, 20);
+drawDot(img15, 14, 150, 2, 20);
+drawHLine(img15, 5, 15, 156, 25);
+
+var defaultMargin15 = Det.findFaceCandidates(img15, { maxCandidates: 5, minEyeDistRatio: 0.01, maxEyeDistRatio: 0.2 });
+check('既定の肌色余白(15%)では、画像端近くのパターンは検出範囲外(見つからない)',
+  !defaultMargin15.some(function (c) { return c.points.eyeLeft.x < 20; }));
+
+var widerMargin15 = Det.findFaceCandidates(img15, { maxCandidates: 5, minEyeDistRatio: 0.01, maxEyeDistRatio: 0.2, skin: { marginRatio: 0.4 } });
+check('skin.marginRatioを広げる(40%)と、画像端近くのパターンも検出範囲に入る',
+  widerMargin15.some(function (c) { return c.points.eyeLeft.x < 20; }));
+
 console.log('\n合計(拡張分含む): ' + pass + ' 成功 / ' + fail + ' 失敗');
 process.exit(fail > 0 ? 1 : 0);
