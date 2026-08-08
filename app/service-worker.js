@@ -5,7 +5,7 @@
  * (ブラウザの永続ストレージ側に保存される)。
  */
 
-const CACHE_VERSION = 'ninso-cache-v2';
+const CACHE_VERSION = 'ninso-cache-v3';
 
 const APP_SHELL = [
   './',
@@ -13,6 +13,7 @@ const APP_SHELL = [
   './style.css',
   './hidden-face-engine.js',
   './hidden-face-detector.js',
+  './pattern-detector.js',
   './autonomous-face-reader.js',
   './app.js',
   './manifest.json',

@@ -457,12 +457,31 @@
     renderGansouReport(document.getElementById('hf-result'), report);
   }
 
-  // --- mark モード: 画像アップロード + タップでのマーキング(実験的) ---
+  // --- mark モード: 画像アップロード + 自動マーキング ---
+  //
+  // 2026-08版で全面刷新: 従来は「暗い点(目候補)のペア+その下の暗い線
+  // (口候補)」という固定テンプレートで探索し、検出位置・種類をプル
+  // ダウンで選んでから解析する方式だった。これだと
+  //   - 目・口の幾何配置に一致しない画像(ネクタイの柄など)では
+  //     候補が1件しか出ない、あるいは0件になる
+  //   - 「候補を選ぶ→採用する」を毎回人間がやる必要があり、自動化に
+  //     なっていない
+  // という問題があった(講座動画のスクリーンショット・ユーザー指摘を
+  // 踏まえての作り直し)。
+  //
+  // 新方式(app/pattern-detector.js)は、目・鼻・口という固定カテゴリを
+  // 一切前提とせず、「意味のありそうな線のつながり」「周囲との色の
+  // 違い」「周囲との陰影(浮き具合)の違い」を持つ領域をすべて検出し、
+  // 講座の先生と同じように画像の上へ直接、円や線で自動的に囲んで
+  // 表示する。ユーザーは候補を1件ずつ選んでから解析する必要はなく、
+  // 検出結果がそのまま見える。位置・種類・向きの割り当ては、記録用の
+  // 補助情報として「気になるマークをクリック(タップ)した時だけ」
+  // 任意で行える。
 
   function renderGansouMarkForm() {
     var eng = engine();
     var html = '';
-    html += '<div class="notice">画像をアップロードすると「自動検出する」ボタンで、暗い斑点(ほくろ等)のペア+その下の暗い線(しわ・口)の組み合わせを画像処理だけで(学習データ不要のアルゴリズムで)、複数の解像度を横断して探します。実物大の目・口ではなく、髪の生え際やこめかみ・輪郭付近に小さくまとまった2〜3点のパターン(間隔は画像幅のおおむね1〜12%程度)を狙って狭い範囲で探すよう調整しています。探索範囲も肌色領域だけでなく、髪の毛や顔の輪郭周辺まで広めに含めています。候補から選ぶか、自分で3点タップして手動マーキングすることもできます。肌色マスキング(下のチェックボックス)は実在の顔写真向けの機能で、木目・岩肌・壁のシミ等、顔以外のパレイドリア現象を探す場合はオフにすると検出範囲がさらに広がります。本物の顔の目・口に一致すると判定された候補は「本物の顔らしい候補」として分けて表示し、隠れ相候補には含めません(本物の目・口を指すだけの当たり前の指摘を避けるため)。人間の顔以外(物のシルエット等)を見つけた場合は「抽象相JSON解析」タブで自由に記述できます。まだ実験的な機能で、精度には限界があります(docs/GANSOU_ROADMAP.md 参照)。ここで保存した記録は、将来のAIモデル学習用データの土台になります。</div>';
+    html += '<div class="notice">画像をアップロードして「自動検出する」を押すと、目・鼻・口といった顔のパーツに当てはめようとはせず、①意味のありそうな線のつながり(しわ・筋)、②周囲との色の違い、③周囲との陰影(浮き具合)の違いを持つ領域を、見つかった分だけ画像の上に直接、円や線で自動的にマーキングします(講座の先生が手描きで丸囲みするのと同じ発想です)。候補を1件ずつ選んで採用する操作は不要です。マーキングをクリック(タップ)すると、そのマークだけに位置・向き・種類を任意で割り当てて記録用の解釈文を作れます。学習データとして意味のある画像であれば、木目・岩肌・服の柄・小物など、顔写真以外にも使えます。まだ実験的な機能で、精度には限界があります(docs/GANSOU_ROADMAP.md 参照)。</div>';
 
     html += '<input type="file" accept="image/*" id="gs-image-input">';
     html += '<div id="gs-image-wrap" style="position:relative;margin-top:10px;max-width:100%;">';
@@ -470,27 +489,53 @@
     html += '<canvas id="gs-canvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>';
     html += '</div>';
     html += '<p id="gs-status" style="font-size:0.8rem;color:#6b5842;">まず画像を選択してください。</p>';
-    html += '<label style="display:block;font-size:0.8rem;margin:6px 0;"><input type="checkbox" id="gs-skinmask-toggle" checked> 肌色マスキングを使う(顔写真向け。木目・岩肌・壁のシミ等、顔以外のパレイドリア探索ではオフにすると検出範囲が広がります)</label>';
-    html += '<button class="btn" id="gs-autodetect-btn" type="button">自動検出する(実験的・点+線のパターン探索、複数解像度で探索)</button> ';
-    html += '<button class="btn secondary" id="gs-reset-btn" type="button">マーキングをリセット</button>';
-    html += '<div id="gs-auto-candidates"></div>';
 
-    html += '<label class="field-label">検出位置</label>';
+    html += '<label class="field-label" style="margin-top:10px;">検出の感度</label>';
+    html += '<select id="gs-sensitivity">';
+    html += '<option value="wide">広め(小さな違いも拾う。誤検出は増える)</option>';
+    html += '<option value="normal" selected>標準</option>';
+    html += '<option value="strict">狭め(はっきり違う所だけ)</option>';
+    html += '</select>';
+
+    html += '<div style="margin-top:8px;">';
+    html += '<button class="btn" id="gs-autodetect-btn" type="button">自動検出する(線・色・陰影の違いをまとめて検出)</button> ';
+    html += '<button class="btn secondary" id="gs-reset-btn" type="button">マーキングをリセット</button>';
+    html += '</div>';
+    html += '<div id="gs-auto-summary"></div>';
+    html += '<div id="gs-auto-list"></div>';
+
+    html += '<div id="gs-select-form" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">';
+    html += '<p style="font-size:0.8rem;color:#6b5842;" id="gs-select-label"></p>';
+    html += '<label class="field-label">検出位置(任意)</label>';
     html += '<select id="gs-position">';
     (eng ? eng.POSITION_LIST : []).forEach(function (p) {
       html += '<option value="' + escapeHTML(p) + '">' + escapeHTML(p) + '</option>';
     });
     html += '</select>';
 
-    html += '<label class="field-label">種類</label>';
+    html += '<label class="field-label">向き(任意)</label>';
+    html += '<select id="gs-orientation">';
+    ['不明', '内向き', '外向き', '上向き', '下向き'].forEach(function (o) {
+      html += '<option value="' + escapeHTML(o) + '">' + escapeHTML(o) + '</option>';
+    });
+    html += '</select>';
+
+    html += '<label class="field-label">種類(任意)</label>';
     html += '<select id="gs-type">';
     Object.keys(eng ? eng.TYPE_MEANINGS : {}).forEach(function (t) {
       html += '<option value="' + escapeHTML(t) + '">' + escapeHTML(t) + '</option>';
     });
     html += '</select>';
 
-    html += '<button class="btn" id="gs-analyze-btn" type="button" style="margin-top:10px;">解析する</button>';
+    html += '<button class="btn" id="gs-analyze-btn" type="button" style="margin-top:10px;">このマークを解釈する</button>';
+    html += '</div>';
     html += '<div id="gs-result"></div>';
+
+    html += '<details style="margin-top:14px;"><summary style="font-size:0.8rem;color:#8a7860;cursor:pointer;">手動で3点(目・目・口)をタップして指定する(従来方式)</summary>';
+    html += '<p style="font-size:0.8rem;color:#6b5842;margin-top:6px;">画像上を3回タップすると、目(左)→目(右)→口の順でマーキングできます。自動検出のマークとは独立して使えます。</p>';
+    html += '<button class="btn secondary" id="gs-manual-analyze-btn" type="button">3点マーキングを解析する</button>';
+    html += '<div id="gs-manual-result"></div>';
+    html += '</details>';
 
     html += '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">';
     html += '<label style="font-size:0.85rem;"><input type="checkbox" id="gs-include-image"> 画像データも一緒に保存する(端末の保存容量に注意)</label>';
@@ -544,6 +589,13 @@
     URL.revokeObjectURL(url);
   }
 
+  // 感度プリセット → PatternDetector のオプションへの変換
+  function sensitivityToOptions(level) {
+    if (level === 'wide') return { thresholdK: 1.05, maxMarks: 18 };
+    if (level === 'strict') return { thresholdK: 1.7, maxMarks: 10 };
+    return { thresholdK: 1.35, maxMarks: 14 };
+  }
+
   function initGansouMarking(panel) {
     var fileInput = panel.querySelector('#gs-image-input');
     var wrap = panel.querySelector('#gs-image-wrap');
@@ -551,26 +603,74 @@
     var canvas = panel.querySelector('#gs-canvas');
     var statusEl = panel.querySelector('#gs-status');
     var resultEl = panel.querySelector('#gs-result');
+    var manualResultEl = panel.querySelector('#gs-manual-result');
     var positionSelect = panel.querySelector('#gs-position');
+    var orientationSelect = panel.querySelector('#gs-orientation');
     var typeSelect = panel.querySelector('#gs-type');
     var includeImageCheckbox = panel.querySelector('#gs-include-image');
     var sampleCountEl = panel.querySelector('#gs-sample-count');
+    var sensitivitySelect = panel.querySelector('#gs-sensitivity');
+    var autoSummaryEl = panel.querySelector('#gs-auto-summary');
+    var autoListEl = panel.querySelector('#gs-auto-list');
+    var selectFormEl = panel.querySelector('#gs-select-form');
+    var selectLabelEl = panel.querySelector('#gs-select-label');
     if (!fileInput || !canvas) return;
 
     var POINT_LABELS_JA = ['目(左)', '目(右)', '口'];
-    gansouMark = { points: [], imgLoaded: false, imgDataURL: null, lastReport: null, lastPoints: null, lastFaceCenter: null };
+    gansouMark = {
+      points: [], imgLoaded: false, imgDataURL: null,
+      lastReport: null, lastPoints: null, lastFaceCenter: null,
+      autoMarks: [], selectedMarkId: null, analysisSize: null,
+    };
 
     function updateStatus() {
-      var idx = gansouMark.points.length;
-      statusEl.textContent = idx >= 3
-        ? '3点マーキング完了。「解析する」を押してください(やり直す場合はリセット)。'
-        : (gansouMark.imgLoaded ? '次にタップ: ' + POINT_LABELS_JA[idx] : 'まず画像を選択してください。');
+      if (!gansouMark.imgLoaded) { statusEl.textContent = 'まず画像を選択してください。'; return; }
+      if (gansouMark.autoMarks.length) {
+        statusEl.textContent = gansouMark.autoMarks.length + '件のマークを自動検出済み。気になるマークをクリックすると詳しく解釈できます(3点タップは下の「手動で指定」欄で独立して使えます)。';
+      } else {
+        statusEl.textContent = '「自動検出する」を押すか、下の「手動で3点をタップして指定する」を開いてください。';
+      }
+    }
+
+    function markStrokeStyle(m, selected) {
+      if (selected) return { stroke: '#c0392b', width: 2.6 };
+      return { stroke: '#2f8fb0', width: 1.8 };
     }
 
     function redraw() {
       if (!canvas.getContext) return;
       var ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 自動検出マーク(円=塊、折れ線=線状パターン)
+      gansouMark.autoMarks.forEach(function (m) {
+        var selected = gansouMark.selectedMarkId === m.id;
+        var style = markStrokeStyle(m, selected);
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = style.width;
+        ctx.globalAlpha = selected ? 0.95 : 0.8;
+        if (m.kind === 'blob') {
+          ctx.beginPath();
+          ctx.arc(m.shape.cx, m.shape.cy, Math.max(4, m.shape.r), 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          var pts = m.shape.points;
+          if (pts.length) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 1;
+        // 番号ラベル
+        var labelPos = m.kind === 'blob' ? { x: m.shape.cx + m.shape.r + 3, y: m.shape.cy - m.shape.r - 3 } : m.shape.points[0];
+        ctx.fillStyle = style.stroke;
+        ctx.font = '11px sans-serif';
+        ctx.fillText(String(m.id + 1), labelPos.x + 4, labelPos.y - 2);
+      });
+
+      // 手動3点マーキング
       ctx.fillStyle = '#a1472f';
       ctx.font = '12px sans-serif';
       gansouMark.points.forEach(function (p, i) {
@@ -581,6 +681,7 @@
       });
       if (gansouMark.points.length >= 2) {
         ctx.strokeStyle = '#7a5c3e';
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(gansouMark.points[0].x, gansouMark.points[0].y);
         ctx.lineTo(gansouMark.points[1].x, gansouMark.points[1].y);
@@ -590,6 +691,38 @@
 
     function updateSampleCount() {
       if (sampleCountEl) sampleCountEl.textContent = String(loadGansouSamples().length);
+    }
+
+    function renderAutoList() {
+      if (!gansouMark.autoMarks.length) {
+        autoListEl.innerHTML = '';
+        return;
+      }
+      var html = '';
+      gansouMark.autoMarks.forEach(function (m) {
+        var kindLabel = m.kind === 'line' ? '線' : '塊';
+        var selected = gansouMark.selectedMarkId === m.id;
+        html += '<div class="option-row' + (selected ? ' active' : '') + '" data-mark-id="' + m.id + '" style="cursor:pointer;' + (selected ? 'font-weight:bold;' : '') + '">' +
+          '<span class="option-label">#' + (m.id + 1) + ' ' + kindLabel + '・スコア' + m.score + '</span> ' +
+          '<span style="font-size:0.78rem;color:#6b5842;">' + escapeHTML(m.note) + '</span></div>';
+      });
+      autoListEl.innerHTML = html;
+      autoListEl.querySelectorAll('[data-mark-id]').forEach(function (row) {
+        row.addEventListener('click', function () {
+          selectMark(parseInt(row.getAttribute('data-mark-id'), 10));
+        });
+      });
+    }
+
+    function selectMark(id) {
+      var m = gansouMark.autoMarks.filter(function (x) { return x.id === id; })[0];
+      if (!m) return;
+      gansouMark.selectedMarkId = id;
+      redraw();
+      renderAutoList();
+      selectFormEl.style.display = '';
+      var kindLabel = m.kind === 'line' ? '線状のパターン' : '塊状のパターン';
+      selectLabelEl.textContent = '選択中: #' + (m.id + 1) + '(' + kindLabel + '・スコア' + m.score + ')。' + m.note + '。位置・向き・種類を選んで「このマークを解釈する」を押すと解釈文が作れます(すべて任意・省略可)。';
     }
 
     fileInput.addEventListener('change', function (ev) {
@@ -605,9 +738,15 @@
           wrap.style.width = w + 'px';
           wrap.style.height = h + 'px';
           gansouMark.points = [];
+          gansouMark.autoMarks = [];
+          gansouMark.selectedMarkId = null;
           gansouMark.imgDataURL = e.target.result;
           gansouMark.imgLoaded = true;
           resultEl.innerHTML = '';
+          manualResultEl.innerHTML = '';
+          autoSummaryEl.innerHTML = '';
+          autoListEl.innerHTML = '';
+          selectFormEl.style.display = 'none';
           updateStatus();
           redraw();
         };
@@ -617,32 +756,60 @@
     });
 
     canvas.addEventListener('click', function (ev) {
-      if (!gansouMark.imgLoaded || gansouMark.points.length >= 3) return;
+      if (!gansouMark.imgLoaded) return;
       var rect = canvas.getBoundingClientRect();
-      gansouMark.points.push({ x: ev.clientX - rect.left, y: ev.clientY - rect.top });
-      redraw();
-      updateStatus();
+      var cx = ev.clientX - rect.left, cy = ev.clientY - rect.top;
+
+      // まず、既存の自動マークの近くをクリックしたかどうかを判定する
+      // (円は中心からの距離、線は各点までの最短距離で判定)。
+      var hitId = null, hitDist = Infinity;
+      gansouMark.autoMarks.forEach(function (m) {
+        var d;
+        if (m.kind === 'blob') {
+          var dx = cx - m.shape.cx, dy = cy - m.shape.cy;
+          d = Math.abs(Math.sqrt(dx * dx + dy * dy) - m.shape.r);
+          d = Math.min(d, Math.sqrt(dx * dx + dy * dy) <= m.shape.r ? 0 : d);
+        } else {
+          d = Infinity;
+          var pts = m.shape.points;
+          for (var i = 0; i < pts.length; i++) {
+            var ddx = cx - pts[i].x, ddy = cy - pts[i].y;
+            var dd = Math.sqrt(ddx * ddx + ddy * ddy);
+            if (dd < d) d = dd;
+          }
+        }
+        if (d < 14 && d < hitDist) { hitDist = d; hitId = m.id; }
+      });
+
+      if (hitId !== null) {
+        selectMark(hitId);
+        return;
+      }
+
+      // 自動マークにヒットしなかった場合、手動3点マーキング欄がまだ
+      // 埋まっていなければ、そちらへ座標を追加する(従来の挙動を維持)。
+      if (gansouMark.points.length < 3) {
+        gansouMark.points.push({ x: cx, y: cy });
+        redraw();
+      }
     });
 
     var autoDetectBtn = panel.querySelector('#gs-autodetect-btn');
-    var autoCandidatesEl = panel.querySelector('#gs-auto-candidates');
-    var skinMaskToggle = panel.querySelector('#gs-skinmask-toggle');
     if (autoDetectBtn) autoDetectBtn.addEventListener('click', function () {
       if (!gansouMark.imgLoaded) {
-        autoCandidatesEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に画像を選択してください。</p>';
+        autoSummaryEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に画像を選択してください。</p>';
         return;
       }
-      var det = (typeof window !== 'undefined' && window.HiddenFaceDetector) || null;
-      var eng = engine();
-      if (!det) {
-        autoCandidatesEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">検出モジュールを読み込めませんでした。</p>';
+      var pd = (typeof window !== 'undefined' && window.PatternDetector) || null;
+      if (!pd) {
+        autoSummaryEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">検出モジュールを読み込めませんでした。</p>';
         return;
       }
-      autoCandidatesEl.innerHTML = '<p style="font-size:0.8rem;color:#6b5842;">解析中(複数解像度で探索しています)…</p>';
+      autoSummaryEl.innerHTML = '<p style="font-size:0.8rem;color:#6b5842;">解析中(複数解像度で線・色・陰影の違いを探索しています)…</p>';
+      autoListEl.innerHTML = '';
+      selectFormEl.style.display = 'none';
+      gansouMark.selectedMarkId = null;
 
-      // 解析用に縮小したオフスクリーンcanvasへ描画してImageDataを取得
-      // (マルチスケール探索の中で更に複数解像度へ縮小するため、ここでは
-      // 少し大きめの長辺360pxを上限にしておく)
       var naturalW = img.naturalWidth || canvas.width;
       var naturalH = img.naturalHeight || canvas.height;
       var maxDim = 360;
@@ -660,101 +827,103 @@
       try {
         imageData = offCtx.getImageData(0, 0, analysisW, analysisH);
       } catch (e) {
-        autoCandidatesEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">画像の解析に失敗しました(' + escapeHTML(String(e)) + ')。</p>';
+        autoSummaryEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">画像の解析に失敗しました(' + escapeHTML(String(e)) + ')。</p>';
         return;
       }
 
-      var useSkinMask = !skinMaskToggle || skinMaskToggle.checked;
-      var candidates = det.findFaceCandidatesMultiScale(imageData, {
-        maxCandidates: 8,
+      var sensOptions = sensitivityToOptions(sensitivitySelect ? sensitivitySelect.value : 'normal');
+      var marks = pd.findMarkingsMultiScale(imageData, shallowMergeLocal({
         scales: [160, 240, 360],
-        skinMask: useSkinMask,
-        // 「まだ広い範囲で目と口を探している」というユーザー指摘への対応。
-        // 既定(0.03〜0.6)は実物大の顔の目の間隔を想定した広い範囲だった。
-        // ここでは、髪の生え際等に小さくまとまった2〜3点のパターンを
-        // 狙って、間隔の許容範囲を大きく狭める(画像幅の1%〜12%程度)。
-        minEyeDistRatio: 0.01,
-        maxEyeDistRatio: 0.12,
-        // 肌色領域の外接矩形に対する余白を広げ、髪の毛や顔の輪郭(髪の
-        // 生え際・こめかみ・輪郭線の周辺)まで探索範囲に含める
-        // (既定15%→40%)。
-        skin: { marginRatio: 0.4 },
-        scoreFn: eng ? eng.computeFaceLikenessScore : undefined,
-      });
-
-      if (!candidates.length) {
-        autoCandidatesEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">点+線の組み合わせパターンは見つかりませんでした。手動でマーキングするか、肌色マスキングのオン/オフを切り替えて再度お試しください。</p>';
-        return;
-      }
-
-      // 「本物の目・口を指して"ここに目があります"と言うだけの、
-      // 当たり前の指摘になってしまう」というユーザー指摘への対応。
-      // 候補群から「おそらく本物の顔」を1件推定して分離し、隠れ相
-      // 候補としては提示しない(ただし完全な判定ではないため、
-      // 折りたたみで参照・採用は可能にする)。
-      var split = det.splitObviousRealFace ? det.splitObviousRealFace(candidates, imageData) : { obvious: null, hidden: candidates };
-      var hiddenCandidates = split.hidden;
-      var obviousCandidate = split.obvious;
+      }, sensOptions));
 
       // 解析用の縮小座標 → 表示canvas座標へのスケール
       var scaleX = canvas.width / analysisW;
       var scaleY = canvas.height / analysisH;
-
-      function candidateRowHtml(c, i, keyPrefix) {
-        return '<div class="option-row"><span class="option-label">候補' + (i + 1) + '(スコア ' + c.score + (c.scale ? '・解像度' + c.scale + 'px' : '') + ')</span> ' +
-          '<button class="btn secondary gs-adopt-btn" type="button" data-candidate-key="' + keyPrefix + i + '">採用する</button></div>';
-      }
-
-      var html;
-      if (!hiddenCandidates.length) {
-        html = '<p style="font-size:0.85rem;color:#6b5842;">検出された点+線パターンは、本物の顔の目・口である可能性が高いと判定されたもの以外に見つかりませんでした(単なる「本物の目・口を指すだけ」の指摘を避けるため、隠れ相候補からは除外しています)。下の「本物の顔らしい候補」からも採用はできますが、隠れ相の練習としては、木目・岩肌・髪の生え際・輪郭の一部など、目・口以外の領域も手動でタップしてみることをおすすめします。</p>';
-      } else {
-        html = '<p style="font-size:0.85rem;color:#6b5842;">隠れ相候補が' + hiddenCandidates.length + '件見つかりました(スコア順、複数解像度を統合。本物の顔の目・口とみられる候補は下記「本物の顔らしい候補」側に分けています)。採用すると3点マーキングが自動入力されます。</p>';
-        hiddenCandidates.forEach(function (c, i) { html += candidateRowHtml(c, i, 'h'); });
-      }
-
-      if (obviousCandidate) {
-        html += '<details style="margin-top:8px;"><summary style="font-size:0.8rem;color:#8a7860;cursor:pointer;">本物の顔らしい候補(参考・通常は隠れ相ではないため折りたたみ)</summary>';
-        html += candidateRowHtml(obviousCandidate, 0, 'o');
-        html += '</details>';
-      }
-      autoCandidatesEl.innerHTML = html;
-
-      var candidateByKey = {};
-      hiddenCandidates.forEach(function (c, i) { candidateByKey['h' + i] = c; });
-      if (obviousCandidate) candidateByKey['o0'] = obviousCandidate;
-
-      autoCandidatesEl.querySelectorAll('.gs-adopt-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var key = btn.getAttribute('data-candidate-key');
-          var c = candidateByKey[key];
-          if (!c) return;
-          gansouMark.points = [
-            { x: c.points.eyeLeft.x * scaleX, y: c.points.eyeLeft.y * scaleY },
-            { x: c.points.eyeRight.x * scaleX, y: c.points.eyeRight.y * scaleY },
-            { x: c.points.mouth.x * scaleX, y: c.points.mouth.y * scaleY },
-          ];
-          redraw();
-          updateStatus();
-        });
+      gansouMark.autoMarks = marks.map(function (m) {
+        var scaled = { id: m.id, kind: m.kind, score: m.score, note: m.note, scale: m.scale };
+        if (m.kind === 'blob') {
+          scaled.shape = { cx: m.shape.cx * scaleX, cy: m.shape.cy * scaleY, r: m.shape.r * ((scaleX + scaleY) / 2) };
+        } else {
+          scaled.shape = {
+            points: m.shape.points.map(function (p) { return { x: p.x * scaleX, y: p.y * scaleY }; }),
+            strokeWidth: m.shape.strokeWidth,
+          };
+        }
+        if (m.bbox) {
+          scaled.bbox = { x: m.bbox.x * scaleX, y: m.bbox.y * scaleY, w: m.bbox.w * scaleX, h: m.bbox.h * scaleY };
+        }
+        return scaled;
       });
+      gansouMark.analysisSize = { w: analysisW, h: analysisH };
+
+      if (!gansouMark.autoMarks.length) {
+        autoSummaryEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">この設定では、周囲から明確に浮いて見える線・色・陰影のパターンは見つかりませんでした。「検出の感度」を「広め」に変えて再度お試しいただくか、手動で3点マーキングしてください。</p>';
+      } else {
+        autoSummaryEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">' + gansouMark.autoMarks.length + '件のマークを検出しました(スコア順)。画像に直接、円(塊状のパターン)と線(線状のつながり)で表示しています。気になるマークをクリックすると詳しく解釈できます。</p>';
+      }
+      renderAutoList();
+      redraw();
+      updateStatus();
     });
+
+    function shallowMergeLocal(a, b) {
+      var out = {}, k;
+      if (a) for (k in a) if (a.hasOwnProperty(k)) out[k] = a[k];
+      if (b) for (k in b) if (b.hasOwnProperty(k)) out[k] = b[k];
+      return out;
+    }
 
     var resetBtn = panel.querySelector('#gs-reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', function () {
       gansouMark.points = [];
+      gansouMark.autoMarks = [];
+      gansouMark.selectedMarkId = null;
       gansouMark.lastReport = null;
       redraw();
       updateStatus();
       resultEl.innerHTML = '';
+      manualResultEl.innerHTML = '';
+      autoSummaryEl.innerHTML = '';
+      autoListEl.innerHTML = '';
+      selectFormEl.style.display = 'none';
     });
 
     var analyzeBtn = panel.querySelector('#gs-analyze-btn');
     if (analyzeBtn) analyzeBtn.addEventListener('click', function () {
       var eng = engine();
       if (!eng) return;
+      var m = gansouMark.autoMarks.filter(function (x) { return x.id === gansouMark.selectedMarkId; })[0];
+      if (!m) {
+        resultEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に画像上のマークをクリックして選択してください。</p>';
+        return;
+      }
+      var regionCoords = m.bbox
+        ? { x: Math.round(m.bbox.x), y: Math.round(m.bbox.y), w: Math.round(m.bbox.w), h: Math.round(m.bbox.h) }
+        : null;
+      var report = eng.buildGansouReport({
+        position: positionSelect.value,
+        orientation: orientationSelect.value,
+        type: typeSelect.value,
+        score: m.score,
+        count: gansouMark.autoMarks.length,
+        regionCoords: regionCoords,
+      });
+      report.detectionKind = m.kind;
+      report.detectionNote = m.note;
+      gansouMark.lastReport = report;
+      gansouMark.lastPoints = null;
+      gansouMark.lastFaceCenter = null;
+      var extraHtml = '<div class="result-block"><h4>自動検出情報</h4><p>種別: ' + (m.kind === 'line' ? '線状のつながり' : '塊状の領域') + ' / 検出スコア: ' + m.score + '点<br>' + escapeHTML(m.note) + '</p></div>';
+      renderGansouReport(resultEl, report);
+      resultEl.innerHTML += extraHtml;
+    });
+
+    var manualAnalyzeBtn = panel.querySelector('#gs-manual-analyze-btn');
+    if (manualAnalyzeBtn) manualAnalyzeBtn.addEventListener('click', function () {
+      var eng = engine();
+      if (!eng) return;
       if (gansouMark.points.length < 3) {
-        resultEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に3点(目2つ・口)をタップしてください。</p>';
+        manualResultEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に画像上で3点(目2つ・口)をタップしてください。</p>';
         return;
       }
       var points = { eyeLeft: gansouMark.points[0], eyeRight: gansouMark.points[1], mouth: gansouMark.points[2] };
@@ -776,18 +945,19 @@
       gansouMark.lastReport = report;
       gansouMark.lastPoints = points;
       gansouMark.lastFaceCenter = faceCenter;
-      renderGansouReport(resultEl, report);
+      renderGansouReport(manualResultEl, report);
     });
 
     var saveBtn = panel.querySelector('#gs-save-sample-btn');
     if (saveBtn) saveBtn.addEventListener('click', function () {
       if (!gansouMark.lastReport) {
-        window.alert('先に「解析する」を実行してください。');
+        window.alert('先に「このマークを解釈する」または「3点マーキングを解析する」を実行してください。');
         return;
       }
       var ok = saveGansouSample({
         points: gansouMark.lastPoints,
         faceCenter: gansouMark.lastFaceCenter,
+        selectedMark: gansouMark.selectedMarkId !== null ? gansouMark.autoMarks.filter(function (x) { return x.id === gansouMark.selectedMarkId; })[0] : null,
         canvasSize: { w: canvas.width, h: canvas.height },
         position: positionSelect.value,
         type: typeSelect.value,
