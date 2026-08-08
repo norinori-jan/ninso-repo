@@ -462,7 +462,7 @@
   function renderGansouMarkForm() {
     var eng = engine();
     var html = '';
-    html += '<div class="notice">画像をアップロードすると「自動検出する」ボタンで、暗い斑点(ほくろ等)のペア+その下の暗い線(しわ・口)の組み合わせを画像処理だけで(学習データ不要のアルゴリズムで)、複数の解像度を横断して探します。候補から選ぶか、「目(左)→目(右)→口」の順に自分でタップして手動マーキングすることもできます。肌色マスキング(下のチェックボックス)は実在の顔写真向けの機能で、木目・岩肌・壁のシミ等、顔以外のパレイドリア現象を探す場合はオフにすると検出範囲が広がります。まだ実験的な機能で、精度には限界があります(docs/GANSOU_ROADMAP.md 参照)。ここで保存した記録は、将来のAIモデル学習用データの土台になります。</div>';
+    html += '<div class="notice">画像をアップロードすると「自動検出する」ボタンで、暗い斑点(ほくろ等)のペア+その下の暗い線(しわ・口)の組み合わせを画像処理だけで(学習データ不要のアルゴリズムで)、複数の解像度を横断して探します。候補から選ぶか、「目(左)→目(右)→口」の順に自分でタップして手動マーキングすることもできます。肌色マスキング(下のチェックボックス)は実在の顔写真向けの機能で、木目・岩肌・壁のシミ等、顔以外のパレイドリア現象を探す場合はオフにすると検出範囲が広がります。本物の顔の目・口に一致すると判定された候補は「本物の顔らしい候補」として分けて表示し、隠れ相候補には含めません(本物の目・口を指すだけの当たり前の指摘を避けるため)。木目・岩肌・髪の生え際・輪郭の一部など、顔の中心以外の領域も手動タップで積極的に探ってみてください。人間の顔以外(物のシルエット等)を見つけた場合は「抽象相JSON解析」タブで自由に記述できます。まだ実験的な機能で、精度には限界があります(docs/GANSOU_ROADMAP.md 参照)。ここで保存した記録は、将来のAIモデル学習用データの土台になります。</div>';
 
     html += '<input type="file" accept="image/*" id="gs-image-input">';
     html += '<div id="gs-image-wrap" style="position:relative;margin-top:10px;max-width:100%;">';
@@ -677,21 +677,47 @@
         return;
       }
 
+      // 「本物の目・口を指して"ここに目があります"と言うだけの、
+      // 当たり前の指摘になってしまう」というユーザー指摘への対応。
+      // 候補群から「おそらく本物の顔」を1件推定して分離し、隠れ相
+      // 候補としては提示しない(ただし完全な判定ではないため、
+      // 折りたたみで参照・採用は可能にする)。
+      var split = det.splitObviousRealFace ? det.splitObviousRealFace(candidates, imageData) : { obvious: null, hidden: candidates };
+      var hiddenCandidates = split.hidden;
+      var obviousCandidate = split.obvious;
+
       // 解析用の縮小座標 → 表示canvas座標へのスケール
       var scaleX = canvas.width / analysisW;
       var scaleY = canvas.height / analysisH;
 
-      var html = '<p style="font-size:0.85rem;color:#6b5842;">候補が' + candidates.length + '件見つかりました(スコア順、複数解像度を統合)。採用すると3点マーキングが自動入力されます。</p>';
-      candidates.forEach(function (c, i) {
-        html += '<div class="option-row"><span class="option-label">候補' + (i + 1) + '(スコア ' + c.score + (c.scale ? '・解像度' + c.scale + 'px' : '') + ')</span> ' +
-          '<button class="btn secondary gs-adopt-btn" type="button" data-candidate-index="' + i + '">採用する</button></div>';
-      });
+      function candidateRowHtml(c, i, keyPrefix) {
+        return '<div class="option-row"><span class="option-label">候補' + (i + 1) + '(スコア ' + c.score + (c.scale ? '・解像度' + c.scale + 'px' : '') + ')</span> ' +
+          '<button class="btn secondary gs-adopt-btn" type="button" data-candidate-key="' + keyPrefix + i + '">採用する</button></div>';
+      }
+
+      var html;
+      if (!hiddenCandidates.length) {
+        html = '<p style="font-size:0.85rem;color:#6b5842;">検出された点+線パターンは、本物の顔の目・口である可能性が高いと判定されたもの以外に見つかりませんでした(単なる「本物の目・口を指すだけ」の指摘を避けるため、隠れ相候補からは除外しています)。下の「本物の顔らしい候補」からも採用はできますが、隠れ相の練習としては、木目・岩肌・髪の生え際・輪郭の一部など、目・口以外の領域も手動でタップしてみることをおすすめします。</p>';
+      } else {
+        html = '<p style="font-size:0.85rem;color:#6b5842;">隠れ相候補が' + hiddenCandidates.length + '件見つかりました(スコア順、複数解像度を統合。本物の顔の目・口とみられる候補は下記「本物の顔らしい候補」側に分けています)。採用すると3点マーキングが自動入力されます。</p>';
+        hiddenCandidates.forEach(function (c, i) { html += candidateRowHtml(c, i, 'h'); });
+      }
+
+      if (obviousCandidate) {
+        html += '<details style="margin-top:8px;"><summary style="font-size:0.8rem;color:#8a7860;cursor:pointer;">本物の顔らしい候補(参考・通常は隠れ相ではないため折りたたみ)</summary>';
+        html += candidateRowHtml(obviousCandidate, 0, 'o');
+        html += '</details>';
+      }
       autoCandidatesEl.innerHTML = html;
+
+      var candidateByKey = {};
+      hiddenCandidates.forEach(function (c, i) { candidateByKey['h' + i] = c; });
+      if (obviousCandidate) candidateByKey['o0'] = obviousCandidate;
 
       autoCandidatesEl.querySelectorAll('.gs-adopt-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          var idx = parseInt(btn.getAttribute('data-candidate-index'), 10);
-          var c = candidates[idx];
+          var key = btn.getAttribute('data-candidate-key');
+          var c = candidateByKey[key];
           if (!c) return;
           gansouMark.points = [
             { x: c.points.eyeLeft.x * scaleX, y: c.points.eyeLeft.y * scaleY },

@@ -711,6 +711,63 @@
     return deduped.slice(0, maxCandidates);
   }
 
+  // -----------------------------------------------------------------
+  // 「あたりまえの指摘」問題への対応(ユーザー提示の講座動画スクリーン
+  // ショットでの指摘: 「前回までは本当の目と口を指して、ここに目が
+  // あります、となっていた。それは人間からすると当たり前でしょう？に
+  // なるだけ」)。
+  //
+  // findFaceCandidates() の生の結果は、素直に探すと画像の中で最も
+  // スコアが高い組み合わせ=たいてい「本物の目と口」を1位候補にして
+  // しまう。これは検出アルゴリズムとしては正しい挙動だが、「隠れ相
+  // (パレイドリア)」としては意味がない指摘になってしまう。
+  //
+  // この関数は、候補群から「おそらく本物の顔の目+口」と思われるものを
+  // 1件だけ推定して`obvious`として分離し、残りを`hidden`(=隠れ相候補)
+  // として返す。判定はヒューリスティック(スコアの高さ・画像中央への
+  // 近さ・候補群の中での目の間隔の大きさを加重平均)であり、完全では
+  // ない。人間が見て「これはむしろhidden側に入れるべき」「obvious側の
+  // 判定が間違っている」と判断した場合に備え、`obvious`も呼び出し側で
+  // 参照・採用できる形で返す(自動で捨てない)。
+  // -----------------------------------------------------------------
+  function splitObviousRealFace(candidates, imageData) {
+    candidates = candidates || [];
+    if (!candidates.length) return { obvious: null, hidden: [] };
+    if (candidates.length === 1) return { obvious: null, hidden: candidates.slice() };
+
+    var width = (imageData && imageData.width) || 0;
+    var height = (imageData && imageData.height) || 0;
+    var cx = width / 2, cy = height / 2;
+    var diag = Math.sqrt(width * width + height * height) || 1;
+
+    var maxEyeDist = 0;
+    candidates.forEach(function (c) {
+      var d = Math.abs(c.points.eyeRight.x - c.points.eyeLeft.x);
+      if (d > maxEyeDist) maxEyeDist = d;
+    });
+
+    var best = null, bestLikelihood = -Infinity;
+    candidates.forEach(function (c) {
+      var midX = (c.points.eyeLeft.x + c.points.eyeRight.x) / 2;
+      var midY = (c.points.eyeLeft.y + c.points.eyeRight.y) / 2;
+      var distToCenter = Math.sqrt(Math.pow(midX - cx, 2) + Math.pow(midY - cy, 2));
+      var centerCloseness = Math.max(0, 1 - distToCenter / (diag / 2 || 1));
+      var eyeDist = Math.abs(c.points.eyeRight.x - c.points.eyeLeft.x);
+      var sizeRatio = maxEyeDist > 0 ? eyeDist / maxEyeDist : 0;
+      // スコア(検出の妥当性)を主軸に、画像中央への近さ・相対的な大きさを
+      // 加味した「本物の顔らしさ」の目安。重みは経験則で、実写真での
+      // 検証はまだ行っていない。
+      var likelihood = c.score * 0.5 + centerCloseness * 100 * 0.3 + sizeRatio * 100 * 0.2;
+      if (likelihood > bestLikelihood) {
+        bestLikelihood = likelihood;
+        best = c;
+      }
+    });
+
+    var hidden = candidates.filter(function (c) { return c !== best; });
+    return { obvious: best, hidden: hidden };
+  }
+
   return {
     toGrayscale: toGrayscale,
     meanStd: meanStd,
@@ -727,6 +784,7 @@
     findFaceCandidates: findFaceCandidates,
     resizeImageDataBoxAverage: resizeImageDataBoxAverage,
     findFaceCandidatesMultiScale: findFaceCandidatesMultiScale,
+    splitObviousRealFace: splitObviousRealFace,
     fallbackScore: fallbackScore,
   };
 });

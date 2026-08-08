@@ -206,5 +206,26 @@ var skinRegion9 = Det.computeSkinRegion(img9);
 var noSkinMaskCandidates = Det.findFaceCandidates(img9, { maxCandidates: 5, skinMask: false });
 check('非肌色画像でもskinMask:falseで点+線パターンが検出できる', noSkinMaskCandidates.length > 0);
 
+// --- Test 10〜13: splitObviousRealFace() ---
+// 「本物の目・口を指すだけの、当たり前の指摘になってしまう」問題への
+// 対応関数のテスト。画像中央・大きめの目間隔の候補が「本物の顔らしい」
+// と判定され、隅にある小さな候補群が「隠れ相候補」として残ることを確認。
+var imgSize = { width: 300, height: 300 };
+var centerBig = { points: { eyeLeft: { x: 120, y: 140 }, eyeRight: { x: 180, y: 140 }, mouth: { x: 150, y: 170 } }, score: 80 };
+var cornerSmall1 = { points: { eyeLeft: { x: 20, y: 20 }, eyeRight: { x: 35, y: 20 }, mouth: { x: 27, y: 30 } }, score: 60 };
+var cornerSmall2 = { points: { eyeLeft: { x: 260, y: 270 }, eyeRight: { x: 275, y: 270 }, mouth: { x: 267, y: 280 } }, score: 55 };
+
+var split10 = Det.splitObviousRealFace([centerBig, cornerSmall1, cornerSmall2], imgSize);
+check('splitObviousRealFaceは中央・大きい候補をobviousと判定する', !!split10.obvious && split10.obvious === centerBig);
+check('splitObviousRealFaceはobvious以外をhiddenとして返す', split10.hidden.length === 2 &&
+  split10.hidden.indexOf(cornerSmall1) !== -1 && split10.hidden.indexOf(cornerSmall2) !== -1);
+
+var split11 = Det.splitObviousRealFace([], imgSize);
+check('splitObviousRealFaceは空配列でobvious=null・hidden=[]を返す', split11.obvious === null && split11.hidden.length === 0);
+
+var split12 = Det.splitObviousRealFace([cornerSmall1], imgSize);
+check('splitObviousRealFaceは候補が1件だけならobviousを立てずhiddenのみ返す(誤って唯一の候補を除外しない)',
+  split12.obvious === null && split12.hidden.length === 1);
+
 console.log('\n合計(拡張分含む): ' + pass + ' 成功 / ' + fail + ' 失敗');
 process.exit(fail > 0 ? 1 : 0);
