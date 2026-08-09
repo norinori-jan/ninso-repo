@@ -82,5 +82,25 @@ if (tieMarks.length) {
   check('検出座標が画像範囲内にマッピングされている', within);
 }
 
+// --- Test 6: 横長の楕円状の色ムラ(目の下のクマのような形)は楕円として
+// 出力される(真円に押し込めない) ---
+var ovalImg = makeImg(160, 120, [180, 150, 130]);
+// 横長の楕円を塗る(幅24 x 高さ10 程度)
+for (var oy = -5; oy <= 5; oy++) {
+  for (var ox = -12; ox <= 12; ox++) {
+    if ((ox * ox) / (12 * 12) + (oy * oy) / (5 * 5) <= 1) {
+      var px2 = 80 + ox, py2 = 60 + oy;
+      var idx2 = (py2 * 160 + px2) * 4;
+      ovalImg.data[idx2] = 120; ovalImg.data[idx2 + 1] = 90; ovalImg.data[idx2 + 2] = 90;
+    }
+  }
+}
+var ovalMarks = PD.findMarkingsMultiScale(ovalImg, { scales: [120, 160], thresholdK: 1.0 });
+var ovalBlob = ovalMarks.filter(function (m) { return m.kind === 'blob'; })[0];
+check('横長の色ムラが塊として検出される', !!ovalBlob);
+if (ovalBlob) {
+  check('中程度に細長い塊は楕円(rx/ry)として出力される', typeof ovalBlob.shape.rx === 'number' && typeof ovalBlob.shape.ry === 'number');
+}
+
 console.log('\n合計: ' + pass + ' 成功 / ' + fail + ' 失敗');
 process.exit(fail > 0 ? 1 : 0);

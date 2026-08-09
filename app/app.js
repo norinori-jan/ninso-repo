@@ -506,11 +506,24 @@
 
     html += '<div id="gs-select-form" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">';
     html += '<p style="font-size:0.8rem;color:#6b5842;" id="gs-select-label"></p>';
-    html += '<label class="field-label">検出位置(任意)</label>';
+    html += '<label class="field-label">検出位置(任意・自動で近い部位を提案します)</label>';
     html += '<select id="gs-position">';
+    html += '<optgroup label="簡易分類(本アプリ独自)">';
     (eng ? eng.POSITION_LIST : []).forEach(function (p) {
       html += '<option value="' + escapeHTML(p) + '">' + escapeHTML(p) + '</option>';
     });
+    html += '</optgroup>';
+    var frm = (typeof window !== 'undefined' && window.FaceRegionMap) || null;
+    if (frm) {
+      html += '<optgroup label="伝統的な部位名(講座資料より・概算)">';
+      var seenNames = {};
+      frm.REGIONS.forEach(function (r) {
+        if (seenNames[r.name]) return;
+        seenNames[r.name] = true;
+        html += '<option value="' + escapeHTML(r.name) + '">' + escapeHTML(r.name) + '</option>';
+      });
+      html += '</optgroup>';
+    }
     html += '</select>';
 
     html += '<label class="field-label">向き(任意)</label>';
@@ -590,10 +603,14 @@
   }
 
   // 感度プリセット → PatternDetector のオプションへの変換
+  // 2026-08版で調整: 実際の鑑定写真では小さなほくろ・シミ・数本の
+  // 眉間の横じわなど、かなり小さいマークが対象になることが分かった
+  // ため(ユーザー提示の実例より)、既定値(標準)を全体的に感度寄りに
+  // 調整し、`minArea`も画像サイズに対してごく小さく設定する。
   function sensitivityToOptions(level) {
-    if (level === 'wide') return { thresholdK: 1.05, maxMarks: 18 };
-    if (level === 'strict') return { thresholdK: 1.7, maxMarks: 10 };
-    return { thresholdK: 1.35, maxMarks: 14 };
+    if (level === 'wide') return { thresholdK: 0.95, maxMarks: 20, minArea: 3 };
+    if (level === 'strict') return { thresholdK: 1.55, maxMarks: 12, minArea: 5 };
+    return { thresholdK: 1.2, maxMarks: 16, minArea: 3 };
   }
 
   function initGansouMarking(panel) {
@@ -651,7 +668,11 @@
         ctx.globalAlpha = selected ? 0.95 : 0.8;
         if (m.kind === 'blob') {
           ctx.beginPath();
-          ctx.arc(m.shape.cx, m.shape.cy, Math.max(4, m.shape.r), 0, Math.PI * 2);
+          if (typeof m.shape.rx === 'number') {
+            ctx.ellipse(m.shape.cx, m.shape.cy, Math.max(4, m.shape.rx), Math.max(4, m.shape.ry), 0, 0, Math.PI * 2);
+          } else {
+            ctx.arc(m.shape.cx, m.shape.cy, Math.max(4, m.shape.r), 0, Math.PI * 2);
+          }
           ctx.stroke();
         } else {
           var pts = m.shape.points;
@@ -664,7 +685,8 @@
         }
         ctx.globalAlpha = 1;
         // 番号ラベル
-        var labelPos = m.kind === 'blob' ? { x: m.shape.cx + m.shape.r + 3, y: m.shape.cy - m.shape.r - 3 } : m.shape.points[0];
+        var labelR = m.kind === 'blob' ? (typeof m.shape.rx === 'number' ? Math.max(m.shape.rx, m.shape.ry) : m.shape.r) : 0;
+        var labelPos = m.kind === 'blob' ? { x: m.shape.cx + labelR + 3, y: m.shape.cy - labelR - 3 } : m.shape.points[0];
         ctx.fillStyle = style.stroke;
         ctx.font = '11px sans-serif';
         ctx.fillText(String(m.id + 1), labelPos.x + 4, labelPos.y - 2);
@@ -722,7 +744,21 @@
       renderAutoList();
       selectFormEl.style.display = '';
       var kindLabel = m.kind === 'line' ? '線状のパターン' : '塊状のパターン';
-      selectLabelEl.textContent = '選択中: #' + (m.id + 1) + '(' + kindLabel + '・スコア' + m.score + ')。' + m.note + '。位置・向き・種類を選んで「このマークを解釈する」を押すと解釈文が作れます(すべて任意・省略可)。';
+      var suggestText = '';
+      var frm = (typeof window !== 'undefined' && window.FaceRegionMap) || null;
+      if (frm && canvas.width && canvas.height) {
+        var c = m.kind === 'line' ? (m.shape.points[Math.floor(m.shape.points.length / 2)] || m.shape.points[0]) : { x: m.shape.cx, y: m.shape.cy };
+        var nx = c.x / canvas.width, ny = c.y / canvas.height;
+        var region = frm.findNearestRegion(nx, ny);
+        if (region) {
+          suggestText = '伝統的な部位としては「' + region.name + '」に近い位置です(' + region.meaning + ')。';
+          if (positionSelect) {
+            var hasOption = Array.prototype.some.call(positionSelect.options, function (o) { return o.value === region.name; });
+            if (hasOption) positionSelect.value = region.name;
+          }
+        }
+      }
+      selectLabelEl.textContent = '選択中: #' + (m.id + 1) + '(' + kindLabel + '・スコア' + m.score + ')。' + m.note + '。' + suggestText + '検出位置は自動で近い部位を提案していますが、実際の顔の輪郭とはズレることがあるため、必要に応じて選び直してください。向き・種類も合わせて選んで「このマークを解釈する」を押すと解釈文が作れます(すべて任意・省略可)。';
     }
 
     fileInput.addEventListener('change', function (ev) {
@@ -767,8 +803,14 @@
         var d;
         if (m.kind === 'blob') {
           var dx = cx - m.shape.cx, dy = cy - m.shape.cy;
-          d = Math.abs(Math.sqrt(dx * dx + dy * dy) - m.shape.r);
-          d = Math.min(d, Math.sqrt(dx * dx + dy * dy) <= m.shape.r ? 0 : d);
+          if (typeof m.shape.rx === 'number') {
+            // 楕円: 正規化距離(1以下なら内側)を疑似的な距離として使う
+            var normDist = Math.sqrt((dx / m.shape.rx) * (dx / m.shape.rx) + (dy / m.shape.ry) * (dy / m.shape.ry));
+            d = normDist <= 1 ? 0 : (normDist - 1) * Math.max(m.shape.rx, m.shape.ry);
+          } else {
+            d = Math.abs(Math.sqrt(dx * dx + dy * dy) - m.shape.r);
+            d = Math.min(d, Math.sqrt(dx * dx + dy * dy) <= m.shape.r ? 0 : d);
+          }
         } else {
           d = Infinity;
           var pts = m.shape.points;
@@ -812,7 +854,11 @@
 
       var naturalW = img.naturalWidth || canvas.width;
       var naturalH = img.naturalHeight || canvas.height;
-      var maxDim = 360;
+      // 2026-08版で解析解像度を引き上げ(360→480): 実際の鑑定写真では
+      // 小さなほくろ・数本の眉間の横じわなど、かなり小さいマークが
+      // 対象になるため、解析解像度が低いと消えてしまう(ユーザー提示の
+      // 実例より)。
+      var maxDim = 480;
       var scale = Math.min(1, maxDim / Math.max(naturalW, naturalH));
       var analysisW = Math.max(1, Math.round(naturalW * scale));
       var analysisH = Math.max(1, Math.round(naturalH * scale));
@@ -833,7 +879,7 @@
 
       var sensOptions = sensitivityToOptions(sensitivitySelect ? sensitivitySelect.value : 'normal');
       var marks = pd.findMarkingsMultiScale(imageData, shallowMergeLocal({
-        scales: [160, 240, 360],
+        scales: [200, 320, 480],
       }, sensOptions));
 
       // 解析用の縮小座標 → 表示canvas座標へのスケール
@@ -842,7 +888,11 @@
       gansouMark.autoMarks = marks.map(function (m) {
         var scaled = { id: m.id, kind: m.kind, score: m.score, note: m.note, scale: m.scale };
         if (m.kind === 'blob') {
-          scaled.shape = { cx: m.shape.cx * scaleX, cy: m.shape.cy * scaleY, r: m.shape.r * ((scaleX + scaleY) / 2) };
+          if (typeof m.shape.rx === 'number') {
+            scaled.shape = { cx: m.shape.cx * scaleX, cy: m.shape.cy * scaleY, rx: m.shape.rx * scaleX, ry: m.shape.ry * scaleY };
+          } else {
+            scaled.shape = { cx: m.shape.cx * scaleX, cy: m.shape.cy * scaleY, r: m.shape.r * ((scaleX + scaleY) / 2) };
+          }
         } else {
           scaled.shape = {
             points: m.shape.points.map(function (p) { return { x: p.x * scaleX, y: p.y * scaleY }; }),
@@ -859,7 +909,7 @@
       if (!gansouMark.autoMarks.length) {
         autoSummaryEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">この設定では、周囲から明確に浮いて見える線・色・陰影のパターンは見つかりませんでした。「検出の感度」を「広め」に変えて再度お試しいただくか、手動で3点マーキングしてください。</p>';
       } else {
-        autoSummaryEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">' + gansouMark.autoMarks.length + '件のマークを検出しました(スコア順)。画像に直接、円(塊状のパターン)と線(線状のつながり)で表示しています。気になるマークをクリックすると詳しく解釈できます。</p>';
+        autoSummaryEl.innerHTML = '<p style="font-size:0.85rem;color:#6b5842;">' + gansouMark.autoMarks.length + '件のマークを検出しました(スコア順)。画像に直接、円・楕円(塊状のパターン)と線(線状のつながり)で表示しています。気になるマークをクリックすると詳しく解釈できます。</p>';
       }
       renderAutoList();
       redraw();

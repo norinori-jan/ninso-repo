@@ -269,7 +269,8 @@
       var strokeWidth = Math.max(1.5, Math.min(6, n / longSide));
       shape = { points: points, strokeWidth: strokeWidth };
     } else {
-      // 塊: 重心から最も遠い画素までの距離を半径とする外接円(少し余白を足す)
+      // 塊: 中程度に細長い場合は楕円(目の下のクマ・涙袋のような横長の
+      // シミ・くぼみを、無理に真円にしないため)、それ以外は外接円。
       var maxDist = 0;
       for (i = 0; i < n; i++) {
         px = pixelIdxs[i] % width;
@@ -277,8 +278,15 @@
         var d = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
         if (d > maxDist) maxDist = d;
       }
-      var r = Math.max(2, maxDist * 1.15 + 1);
-      shape = { cx: cx, cy: cy, r: r };
+      var isOval = elongation >= 1.4 && elongation < 2.2;
+      if (isOval) {
+        var rx = Math.max(2, (bboxW / 2) * 1.15 + 1);
+        var ry = Math.max(2, (bboxH / 2) * 1.15 + 1);
+        shape = { cx: cx, cy: cy, rx: rx, ry: ry };
+      } else {
+        var r = Math.max(2, maxDist * 1.15 + 1);
+        shape = { cx: cx, cy: cy, r: r };
+      }
     }
 
     return {
@@ -316,7 +324,7 @@
     var n = width * height;
 
     var thresholdK = typeof options.thresholdK === 'number' ? options.thresholdK : 1.35;
-    var minArea = typeof options.minArea === 'number' ? options.minArea : Math.max(4, Math.round(n * 0.0006));
+    var minArea = typeof options.minArea === 'number' ? options.minArea : Math.max(3, Math.round(n * 0.00015));
     var maxArea = typeof options.maxArea === 'number' ? options.maxArea : Math.round(n * 0.15);
 
     var visited = new Uint8Array(n);
@@ -433,6 +441,8 @@
         points: m.shape.points.map(function (p) { return { x: p.x * sx, y: p.y * sy }; }),
         strokeWidth: m.shape.strokeWidth * ((sx + sy) / 2),
       };
+    } else if (typeof m.shape.rx === 'number') {
+      out.shape = { cx: m.shape.cx * sx, cy: m.shape.cy * sy, rx: m.shape.rx * sx, ry: m.shape.ry * sy };
     } else {
       out.shape = { cx: m.shape.cx * sx, cy: m.shape.cy * sy, r: m.shape.r * ((sx + sy) / 2) };
     }
