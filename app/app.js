@@ -506,35 +506,37 @@
 
     html += '<div id="gs-select-form" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">';
     html += '<p style="font-size:0.8rem;color:#6b5842;" id="gs-select-label"></p>';
-    html += '<label class="field-label">検出位置(任意・自動で近い部位を提案します)</label>';
+    html += '<label class="field-label">検出位置(自動で近い部位を提案します。手動で選び直せます)</label>';
     html += '<select id="gs-position">';
-    html += '<optgroup label="簡易分類(本アプリ独自)">';
-    (eng ? eng.POSITION_LIST : []).forEach(function (p) {
-      html += '<option value="' + escapeHTML(p) + '">' + escapeHTML(p) + '</option>';
-    });
-    html += '</optgroup>';
+    html += '<option value="">(自動提案された位置を使用)</option>';
+    html += '<optgroup label="伝統的な部位名(講座資料より・概算)">';
     var frm = (typeof window !== 'undefined' && window.FaceRegionMap) || null;
     if (frm) {
-      html += '<optgroup label="伝統的な部位名(講座資料より・概算)">';
       var seenNames = {};
       frm.REGIONS.forEach(function (r) {
         if (seenNames[r.name]) return;
         seenNames[r.name] = true;
         html += '<option value="' + escapeHTML(r.name) + '">' + escapeHTML(r.name) + '</option>';
       });
-      html += '</optgroup>';
     }
+    html += '</optgroup>';
+    html += '<optgroup label="簡易分類(本アプリ独自)">';
+    (eng ? eng.POSITION_LIST : []).forEach(function (p) {
+      html += '<option value="' + escapeHTML(p) + '">' + escapeHTML(p) + '</option>';
+    });
+    html += '</optgroup>';
     html += '</select>';
 
-    html += '<label class="field-label">向き(任意)</label>';
+    html += '<label class="field-label">向き(関連しそうな場合のみ・任意)</label>';
     html += '<select id="gs-orientation">';
-    ['不明', '内向き', '外向き', '上向き', '下向き'].forEach(function (o) {
+    ['(選択なし)', '内向き', '外向き', '上向き', '下向き'].forEach(function (o) {
       html += '<option value="' + escapeHTML(o) + '">' + escapeHTML(o) + '</option>';
     });
     html += '</select>';
 
-    html += '<label class="field-label">種類(任意)</label>';
+    html += '<label class="field-label">種類(関連しそうな場合のみ・任意。パレイドリア的に何かの形に見える場合のみ選んでください)</label>';
     html += '<select id="gs-type">';
+    html += '<option value="">(選択なし)</option>';
     Object.keys(eng ? eng.TYPE_MEANINGS : {}).forEach(function (t) {
       html += '<option value="' + escapeHTML(t) + '">' + escapeHTML(t) + '</option>';
     });
@@ -638,6 +640,7 @@
       points: [], imgLoaded: false, imgDataURL: null,
       lastReport: null, lastPoints: null, lastFaceCenter: null,
       autoMarks: [], selectedMarkId: null, analysisSize: null,
+      faceBox: null, faceBoxEstimated: false, suggestedRegion: null,
     };
 
     function updateStatus() {
@@ -745,20 +748,33 @@
       selectFormEl.style.display = '';
       var kindLabel = m.kind === 'line' ? '線状のパターン' : '塊状のパターン';
       var suggestText = '';
+      gansouMark.suggestedRegion = null;
       var frm = (typeof window !== 'undefined' && window.FaceRegionMap) || null;
-      if (frm && canvas.width && canvas.height) {
-        var c = m.kind === 'line' ? (m.shape.points[Math.floor(m.shape.points.length / 2)] || m.shape.points[0]) : { x: m.shape.cx, y: m.shape.cy };
-        var nx = c.x / canvas.width, ny = c.y / canvas.height;
-        var region = frm.findNearestRegion(nx, ny);
-        if (region) {
-          suggestText = '伝統的な部位としては「' + region.name + '」に近い位置です(' + region.meaning + ')。';
-          if (positionSelect) {
-            var hasOption = Array.prototype.some.call(positionSelect.options, function (o) { return o.value === region.name; });
-            if (hasOption) positionSelect.value = region.name;
+      if (!frm) {
+        // face-region-map.jsが読み込まれていない(古いキャッシュ等)。
+        // 位置は自動提案せず、その旨を明示する。
+        suggestText = '(伝統的な部位の自動提案ができませんでした。ページを再読み込みしてから再度お試しください。)';
+      } else {
+        var box = gansouMark.faceBox || { x: 0, y: 0, w: canvas.width, h: canvas.height };
+        if (box.w > 0 && box.h > 0) {
+          var c = m.kind === 'line' ? (m.shape.points[Math.floor(m.shape.points.length / 2)] || m.shape.points[0]) : { x: m.shape.cx, y: m.shape.cy };
+          // 顔の外接矩形(肌色領域から推定、または未推定ならcanvas全体)を
+          // 基準に正規化する。canvas全体をそのまま基準にすると、背景が
+          // 大きく写り込んだ写真で位置がズレる(実例で確認済みのバグ)。
+          var nx = (c.x - box.x) / box.w, ny = (c.y - box.y) / box.h;
+          var region = frm.findNearestRegion(nx, ny);
+          if (region) {
+            gansouMark.suggestedRegion = region;
+            var estimateNote = gansouMark.faceBoxEstimated ? '(肌色領域から推定した顔の範囲を基準)' : '(顔の範囲を推定できなかったため画像全体を基準。精度は低めです)';
+            suggestText = '伝統的な部位としては「' + region.name + '」に近い位置です' + estimateNote + '(' + region.meaning + ')。';
+            if (positionSelect) {
+              var hasOption = Array.prototype.some.call(positionSelect.options, function (o) { return o.value === region.name; });
+              if (hasOption) positionSelect.value = region.name;
+            }
           }
         }
       }
-      selectLabelEl.textContent = '選択中: #' + (m.id + 1) + '(' + kindLabel + '・スコア' + m.score + ')。' + m.note + '。' + suggestText + '検出位置は自動で近い部位を提案していますが、実際の顔の輪郭とはズレることがあるため、必要に応じて選び直してください。向き・種類も合わせて選んで「このマークを解釈する」を押すと解釈文が作れます(すべて任意・省略可)。';
+      selectLabelEl.textContent = '選択中: #' + (m.id + 1) + '(' + kindLabel + '・スコア' + m.score + ')。' + m.note + '。' + suggestText + '実際の顔の輪郭とはズレることがあるため、必要に応じて位置を選び直してください。向き・種類は関連しそうな場合のみ選んでください(無理に選ぶ必要はありません)。「このマークを解釈する」を押すと、このマーク単体についての解釈文が作れます。';
     }
 
     fileInput.addEventListener('change', function (ev) {
@@ -882,9 +898,31 @@
         scales: [200, 320, 480],
       }, sensOptions));
 
+      // 顔の外接矩形を推定(肌色領域から)。これを基準に正規化しないと、
+      // 背景(壁・服・ネクタイ等)が写り込んだ写真では、実際には顔の外側
+      // (例: 耳のあたり)にあるマークが、canvas全体を基準にした場合と
+      // 大きくズレた位置として誤って扱われてしまう(例: 耳の線が「右目の
+      // 下」として提案される、といった誤動作の原因になっていた)。
+      var hfd = (typeof window !== 'undefined' && window.HiddenFaceDetector) || null;
+      var faceBoxAnalysis = hfd ? hfd.computeSkinRegion(imageData, {}) : null;
+
       // 解析用の縮小座標 → 表示canvas座標へのスケール
       var scaleX = canvas.width / analysisW;
       var scaleY = canvas.height / analysisH;
+
+      if (faceBoxAnalysis && faceBoxAnalysis.used) {
+        gansouMark.faceBox = {
+          x: faceBoxAnalysis.x1 * scaleX, y: faceBoxAnalysis.y1 * scaleY,
+          w: (faceBoxAnalysis.x2 - faceBoxAnalysis.x1) * scaleX,
+          h: (faceBoxAnalysis.y2 - faceBoxAnalysis.y1) * scaleY,
+        };
+      } else {
+        // 肌色領域が信頼できない場合は画像全体を代用するが、その旨を
+        // 位置提案の際に明示する(faceBoxEstimated=falseで判別)。
+        gansouMark.faceBox = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+      }
+      gansouMark.faceBoxEstimated = !!(faceBoxAnalysis && faceBoxAnalysis.used);
+
       gansouMark.autoMarks = marks.map(function (m) {
         var scaled = { id: m.id, kind: m.kind, score: m.score, note: m.note, scale: m.scale };
         if (m.kind === 'blob') {
@@ -923,6 +961,88 @@
       return out;
     }
 
+    // 2026-08版で新規追加: 自動検出マーク専用の解釈生成。
+    //
+    // 経緯: 以前はここで`eng.buildGansouReport()`(旧・固定テンプレート
+    // 時代の解釈エンジン)をそのまま流用していたため、
+    //   - 「検出された願相は9個と多く…」という、画像全体のマーク総数に
+    //     関する話が、選択した1件だけの解釈に紛れ込む
+    //   - 「顔らしさスコア」という、目・口テンプレートへの当てはまり度を
+    //     表す旧概念のラベルが、無関係なサリエンススコアに使われる
+    //   - 位置・種類のプルダウンが未選択でも規定値(先頭の選択肢)が
+    //     勝手に採用され、ユーザーが選んでいない情報が解釈に混入する
+    //   という、ユーザー指摘の「全体の鑑定とごちゃごちゃになっている」
+    //   問題があった。
+    // このため、選択中の1マークの実データ(種別・スコア・note・自動提案
+    // された位置)だけを材料にした、独立した解釈文を組み立てる。
+    function buildMarkInterpretation(m, region) {
+      var kindLabel = m.kind === 'line' ? '線状のつながり(しわ・筋の候補)' : '塊状の領域(色・陰影の違い)';
+      var positionValue = (positionSelect && positionSelect.value) || '';
+      var chosenRegion = null;
+      if (frmGlobal() && positionValue) {
+        chosenRegion = frmGlobal().REGIONS.filter(function (r) { return r.name === positionValue; })[0] || null;
+      }
+      var effectiveRegion = chosenRegion || region; // 手動選択があればそちらを優先
+      var orientationValue = (orientationSelect && orientationSelect.value) || '';
+      var typeValue = (typeSelect && typeSelect.value) || '';
+      var eng = engine();
+
+      var lines = [];
+      lines.push('種別: ' + kindLabel);
+      lines.push('検出スコア: ' + m.score + '点(周囲との違いの大きさを表す、本アプリ独自の指標。他の一般的な「顔らしさ」とは無関係です)');
+      lines.push('検出された特徴: ' + m.note);
+      if (effectiveRegion) {
+        var basis = chosenRegion ? '(手動選択)' : (gansouMark.faceBoxEstimated ? '(自動推定・肌色領域基準)' : '(自動推定・顔の範囲を特定できなかったため精度は低め)');
+        lines.push('位置: ' + effectiveRegion.name + basis + ' — ' + effectiveRegion.meaning);
+      } else if (positionValue) {
+        var oldMeaning = eng && eng.POSITION_MEANINGS ? eng.POSITION_MEANINGS[positionValue] : null;
+        lines.push('位置: ' + positionValue + (oldMeaning ? ' — ' + oldMeaning : ''));
+      } else {
+        lines.push('位置: (未指定)');
+      }
+      if (orientationValue && orientationValue !== '(選択なし)') lines.push('向き: ' + orientationValue);
+      if (typeValue) {
+        var typeMeaning = eng && eng.TYPE_MEANINGS ? eng.TYPE_MEANINGS[typeValue] : null;
+        lines.push('種類: ' + typeValue + (typeMeaning ? ' — ' + typeMeaning : ''));
+      }
+
+      var summaryParts = [];
+      summaryParts.push('このマーク(#' + (m.id + 1) + ')は' + kindLabel + 'として検出され、' + m.note + 'という特徴があります。');
+      if (effectiveRegion) {
+        summaryParts.push('位置は「' + effectiveRegion.name + '」に近く、伝統的にはこの部位は' + effectiveRegion.meaning + 'とされます。');
+      } else if (positionValue) {
+        summaryParts.push('位置として「' + positionValue + '」が選択されています。');
+      }
+      if (orientationValue && orientationValue !== '(選択なし)') summaryParts.push('向きは' + orientationValue + 'として捉えられています。');
+      if (typeValue) summaryParts.push('種類としては「' + typeValue + '」に近い見え方だと捉えられています。');
+      summaryParts.push('これはこのマーク単体についての、本アプリ独自の解釈であり、他に検出された件数や、画像全体の総合評価とは関係ありません。文献的な裏付けのある鑑定ではなく、参考程度に留めてください。');
+
+      return { lines: lines, summary: summaryParts.join('') };
+    }
+
+    function frmGlobal() {
+      return (typeof window !== 'undefined' && window.FaceRegionMap) || null;
+    }
+
+    function renderMarkInterpretation(container, m, interp) {
+      var html = '';
+      html += '<div class="result-block"><h4>検出内容</h4><dl>';
+      interp.lines.forEach(function (line) {
+        var parts = line.split(/: (.+)/);
+        if (parts.length >= 2) {
+          html += '<dt>' + escapeHTML(parts[0]) + '</dt><dd>' + escapeHTML(parts[1]) + '</dd>';
+        } else {
+          html += '<dd>' + escapeHTML(line) + '</dd>';
+        }
+      });
+      if (m.bbox) {
+        html += '<dt>領域座標(アプリ用)</dt><dd>' + escapeHTML(JSON.stringify({ x: Math.round(m.bbox.x), y: Math.round(m.bbox.y), w: Math.round(m.bbox.w), h: Math.round(m.bbox.h) })) + '</dd>';
+      }
+      html += '</dl></div>';
+      html += '<div class="result-block"><h4>このマークについての解釈(このマーク単体のみ)</h4><p>' + escapeHTML(interp.summary) + '</p></div>';
+      container.innerHTML = html;
+    }
+
     var resetBtn = panel.querySelector('#gs-reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', function () {
       gansouMark.points = [];
@@ -940,32 +1060,21 @@
 
     var analyzeBtn = panel.querySelector('#gs-analyze-btn');
     if (analyzeBtn) analyzeBtn.addEventListener('click', function () {
-      var eng = engine();
-      if (!eng) return;
       var m = gansouMark.autoMarks.filter(function (x) { return x.id === gansouMark.selectedMarkId; })[0];
       if (!m) {
         resultEl.innerHTML = '<p style="color:#a1472f;font-size:0.85rem;">先に画像上のマークをクリックして選択してください。</p>';
         return;
       }
-      var regionCoords = m.bbox
-        ? { x: Math.round(m.bbox.x), y: Math.round(m.bbox.y), w: Math.round(m.bbox.w), h: Math.round(m.bbox.h) }
-        : null;
-      var report = eng.buildGansouReport({
-        position: positionSelect.value,
-        orientation: orientationSelect.value,
-        type: typeSelect.value,
-        score: m.score,
-        count: gansouMark.autoMarks.length,
-        regionCoords: regionCoords,
-      });
-      report.detectionKind = m.kind;
-      report.detectionNote = m.note;
-      gansouMark.lastReport = report;
+      var interp = buildMarkInterpretation(m, gansouMark.suggestedRegion);
+      gansouMark.lastReport = {
+        markId: m.id, kind: m.kind, score: m.score, note: m.note,
+        position: (positionSelect && positionSelect.value) || (gansouMark.suggestedRegion ? gansouMark.suggestedRegion.name : ''),
+        orientation: (orientationSelect && orientationSelect.value) || '',
+        type: (typeSelect && typeSelect.value) || '',
+      };
       gansouMark.lastPoints = null;
       gansouMark.lastFaceCenter = null;
-      var extraHtml = '<div class="result-block"><h4>自動検出情報</h4><p>種別: ' + (m.kind === 'line' ? '線状のつながり' : '塊状の領域') + ' / 検出スコア: ' + m.score + '点<br>' + escapeHTML(m.note) + '</p></div>';
-      renderGansouReport(resultEl, report);
-      resultEl.innerHTML += extraHtml;
+      renderMarkInterpretation(resultEl, m, interp);
     });
 
     var manualAnalyzeBtn = panel.querySelector('#gs-manual-analyze-btn');

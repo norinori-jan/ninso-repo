@@ -5,7 +5,7 @@
  * (ブラウザの永続ストレージ側に保存される)。
  */
 
-const CACHE_VERSION = 'ninso-cache-v4';
+const CACHE_VERSION = 'ninso-cache-v5';
 
 const APP_SHELL = [
   './',
@@ -85,19 +85,23 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
+  // 2026-08版で戦略変更: 従来は「まずキャッシュを即座に返しつつ裏で
+  // 更新する(stale-while-revalidate)」方式だったが、これだと
+  // デプロイ直後の1回目のリロードでは古いファイルがそのまま表示され、
+  // 2回目のリロードでようやく新しい内容が反映されるという分かりにくい
+  // 挙動になっていた(実際にこれが原因で、新しく追加したスクリプト
+  // ファイルが読み込まれず機能が動かない、という不具合が発生した)。
+  // 「まずネットワークを試し、失敗時(オフライン時)のみキャッシュを使う」
+  // 方式に変更し、オンライン時は常に最新のファイルが使われるようにする。
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          if (response && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      // キャッシュがあれば即返しつつ、裏で更新(stale-while-revalidate)
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
