@@ -5,7 +5,7 @@
  * (ブラウザの永続ストレージ側に保存される)。
  */
 
-const CACHE_VERSION = 'ninso-cache-v7';
+const CACHE_VERSION = 'ninso-cache-v8';
 
 const APP_SHELL = [
   './',

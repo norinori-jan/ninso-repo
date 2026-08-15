@@ -806,11 +806,23 @@
       gansouMark.suggestedRegion = null;
       gansouMark.suggestedRegionStart = null;
       gansouMark.suggestedRegionEnd = null;
+      gansouMark.suggestedRegionPath = null;
       if (frm) {
         if (m.kind === 'line') {
           var pts = m.shape.points;
-          gansouMark.suggestedRegionStart = regionAt(pts[0].x, pts[0].y);
-          gansouMark.suggestedRegionEnd = regionAt(pts[pts.length - 1].x, pts[pts.length - 1].y);
+          // 2026-08版で見直し: 講座2(実演)で「線はその途中で通る部位を
+          // 全部拾って、それらが全部その意味に絡んでくる」という具体的な
+          // 教えがあったため、始点・終点の2点だけでなく、線が通る全ての
+          // 点で部位を判定し、連続して同じ部位が続く場合はまとめて
+          // (区間を潰して)経路として保持する。
+          var path = [];
+          pts.forEach(function (p) {
+            var r = regionAt(p.x, p.y);
+            if (r && (!path.length || path[path.length - 1].name !== r.name)) path.push(r);
+          });
+          gansouMark.suggestedRegionPath = path;
+          gansouMark.suggestedRegionStart = path[0] || null;
+          gansouMark.suggestedRegionEnd = path[path.length - 1] || null;
           gansouMark.suggestedRegion = gansouMark.suggestedRegionStart;
         } else {
           gansouMark.suggestedRegion = regionAt(m.shape.cx, m.shape.cy);
@@ -1100,14 +1112,37 @@
       lines.push('検出された特徴: ' + m.note);
 
       var summaryParts = [];
+      var path = (m.kind === 'line' && !manualRegion) ? (gansouMark.suggestedRegionPath || []) : null;
       var regionStart = manualRegion || gansouMark.suggestedRegionStart || gansouMark.suggestedRegion;
       var regionEnd = manualRegion ? null : gansouMark.suggestedRegionEnd;
       var basis = manualRegion ? '(手動選択)' : (gansouMark.faceBoxEstimated ? '(自動判定)' : '(自動判定・顔の範囲を特定できなかったため精度は低め)');
 
-      if (m.kind === 'line' && regionEnd && regionStart && regionEnd.name !== regionStart.name) {
-        lines.push('位置: 「' + regionStart.name + '」から「' + regionEnd.name + '」へ' + basis);
-        summaryParts.push('この線は「' + regionStart.name + '」から「' + regionEnd.name + '」へとつながっています' + basis + '。');
-        summaryParts.push('伝統的には、' + regionStart.name + 'が' + regionPhrase(regionStart) + 'を、' + regionEnd.name + 'が' + regionPhrase(regionEnd) + 'を表す部位とされ、この2点を結ぶ線は、' + regionPhrase(regionStart) + 'の力が' + regionPhrase(regionEnd) + 'へとつながっていく相として読み取れます。');
+      // 2026-08版で追加: 講座2(実演)で「天中から下る線・色は先祖の
+      // 加護、天中へ登る線は自分の力ではどうにもならない大事に関わる相」
+      // という具体的な教えがあり、その見分けは検出された色(明るい/暗い)
+      // で行う、との説明だった。天中が経路に含まれる線については、この
+      // 教えを優先して適用する。
+      var passesTenchu = path && path.some(function (r) { return r.name === '天中'; });
+      if (m.kind === 'line' && passesTenchu) {
+        var otherRegions = path.filter(function (r) { return r.name !== '天中'; });
+        var isBright = /明るい/.test(m.note);
+        var isDark = /暗い/.test(m.note);
+        var otherNames = otherRegions.map(function (r) { return r.name; }).join('→') || '周辺部位';
+        lines.push('位置: 天中を含む経路(' + path.map(function (r) { return r.name; }).join('→') + ')' + basis);
+        summaryParts.push('この線(または色の変化)は、人相で最重要とされる「天中」につながっています。');
+        if (isBright) {
+          summaryParts.push('天中からきれいに降りている(明るい)ことから、伝統的にはご先祖からの加護・応援が' + otherNames + 'の方向へ及んでいる相として読み取れます。');
+        } else if (isDark) {
+          summaryParts.push('天中へと(暗い色で)つながっていることから、伝統的には自分の力だけではどうにもならない大きな出来事(裁判・不可抗力の事態など)に関わる相として読み取れます。');
+        } else {
+          summaryParts.push('天中は、ご先祖からの加護(明るい色で下る場合)と、自分の力ではどうにもならない大事(暗い色で天中へ向かう場合)の両方に関わる、特に重要な部位とされます。今回は色の判定がはっきりしないため、どちらの意味合いが強いかは判断できません。');
+        }
+      } else if (m.kind === 'line' && path && path.length >= 2) {
+        var pathNames = path.map(function (r) { return r.name; });
+        lines.push('位置: 「' + pathNames.join('」→「') + '」' + basis);
+        summaryParts.push('この線は「' + pathNames.join('」→「') + '」という経路でつながっています' + basis + '。');
+        var phraseList = path.map(function (r) { return r.name + '(' + regionPhrase(r) + ')'; }).join('、');
+        summaryParts.push('伝統的には、線が通る部位(' + phraseList + ')はすべてこの相に関わってくるとされ、' + regionPhrase(path[0]) + 'の力が' + regionPhrase(path[path.length - 1]) + 'へとつながっていく相として読み取れます。');
       } else if (regionStart) {
         lines.push('位置: ' + regionStart.name + basis + ' — ' + regionStart.meaning);
         summaryParts.push('位置は「' + regionStart.name + '」にあたり、伝統的にはこの部位は' + regionStart.meaning + 'です。');
