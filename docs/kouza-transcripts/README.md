@@ -9,7 +9,7 @@
 ```
 kouza-transcripts/
   basic/       … 基本編(全6回、完走)の字幕
-  advanced/    … 上級編(全6回、動画取得済み・字幕は順次追加)
+  advanced/    … 上級編(全6回、完走)の字幕
 ```
 
 整理ノート(`docs/kouza-notes/`)も同じ`basic/`・`advanced/`の構成に

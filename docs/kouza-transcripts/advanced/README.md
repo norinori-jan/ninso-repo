@@ -1,16 +1,14 @@
-# 上級編(全6回)
-
-上級編1〜6回目の動画はすでに取得済み(圧縮版・分割版としてユーザーに
-提供済み)。ここには字幕(srt)を、取得でき次第追加していく。
+# 上級編(全6回・完走)
 
 | ファイル | 内容 | 整理ノート |
 |---|---|---|
-| (未取得) | 上級1回目 | `docs/kouza-notes/advanced/KOUZA_ADV1_NOTES.md`(予定) |
-| (未取得) | 上級2回目 | 同上 |
-| (未取得) | 上級3回目 | 同上 |
-| (未取得) | 上級4回目 | 同上 |
-| (未取得) | 上級5回目 | 同上 |
-| (未取得) | 上級6回目 | 同上 |
+| `kouza-adv1.srt` | 上級1回目 | `docs/kouza-notes/advanced/KOUZA_ADV1_NOTES.md` |
+| `kouza-adv2.srt` | 上級2回目 | `docs/kouza-notes/advanced/KOUZA_ADV2_NOTES.md` |
+| `kouza-adv3.srt` | 上級3回目 | `docs/kouza-notes/advanced/KOUZA_ADV3_NOTES.md` |
+| `kouza-adv4.srt` | 上級4回目 | `docs/kouza-notes/advanced/KOUZA_ADV4_NOTES.md` |
+| `kouza-adv5.srt` | 上級5回目 | `docs/kouza-notes/advanced/KOUZA_ADV5_NOTES.md` |
+| `kouza-adv6.srt` | 上級6回目・最終回 | `docs/kouza-notes/advanced/KOUZA_ADV6_NOTES.md` |
 
-命名規則: 基本編は`kouza{n}.srt`、上級編は`kouza-adv{n}.srt`とする
-(基本編との混同を避けるため)。
+各回の内容を貫くテーマ(気色理論・画想修行・天中と訴訟/先祖・恋愛宮と
+夫婦宮の左右差・険難の相など)は
+`docs/kouza-notes/advanced/KOUZA_ADV_OVERVIEW.md`にまとめてある。
